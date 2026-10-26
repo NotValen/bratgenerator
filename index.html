@@ -101,34 +101,34 @@
                     Save JSON
                 </button>
                 <label class="cursor-pointer text-xs px-3 py-1.5 rounded-lg bg-[#110d1a] hover:bg-[#1a1428] text-purple-100 border border-[#231c35] transition">
-                    <span>Load File</span>
+                    <span>Import</span>
                     <input type="file" id="importTimingFileInput" accept=".lrc,.json,.txt" class="hidden">
                 </label>
                 <button id="exportLrcBtn" class="text-xs px-3 py-1.5 rounded-lg bg-[#110d1a] hover:bg-[#1a1428] text-purple-100 border border-[#231c35] transition">
-                    Export LRC
+                    LRC
                 </button>
-                <button id="exportVideoBtn" class="text-xs px-3.5 py-1.5 rounded-lg bg-[#a855f7] hover:bg-[#9333ea] text-white font-semibold transition">
+                <button id="exportVideoBtn" class="text-xs px-3.5 py-1.5 rounded-lg bg-[#a855f7] hover:bg-[#9333ea] text-white font-semibold transition shadow-md shadow-[#a855f7]/20">
                     Export Video
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Status Notification Toast -->
-    <div id="toastBanner" class="fixed bottom-5 right-5 z-50 hidden items-center px-4 py-2.5 rounded-lg bg-[#110d1a] border border-[#a855f7] text-white text-xs font-medium shadow-xl">
+    <!-- Status Toast Notification -->
+    <div id="toastBanner" class="fixed bottom-5 right-5 z-50 hidden items-center gap-2 px-4 py-2 rounded-lg bg-[#110d1a] border border-[#a855f7] text-white text-xs shadow-xl">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#a855f7]"></span>
         <span id="toastMessage">Ready</span>
     </div>
 
-    <!-- Main Workspace -->
+    <!-- Main Workspace Grid -->
     <main class="max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-5 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow items-start">
 
-        <!-- LEFT COLUMN: Video Preview & Audio Transport (5 cols) -->
+        <!-- LEFT COLUMN: Video Canvas Preview & Enlarged Zoomable Audio Deck (5 cols) -->
         <div class="lg:col-span-5 flex flex-col gap-4 lg:sticky lg:top-20">
 
-            <!-- Video Stage Panel -->
-            <div class="bg-[#110d1a] rounded-xl border border-[#231c35] p-4 flex flex-col items-center">
-                <!-- Aspect Ratio & Mode Controls -->
-                <div class="w-full flex flex-wrap items-center justify-between mb-3 gap-2">
+            <!-- Video Canvas Preview Stage -->
+            <div class="bg-[#110d1a] border border-[#231c35] rounded-xl p-4 flex flex-col items-center shadow-xl relative">
+                <div class="w-full flex items-center justify-between mb-3 gap-2">
                     <div class="flex items-center gap-1 bg-[#09070f] p-1 rounded-lg border border-[#231c35]">
                         <button data-ratio="1:1" class="ratio-btn px-2.5 py-1 rounded text-xs font-medium bg-[#a855f7] text-white transition">1:1</button>
                         <button data-ratio="9:16" class="ratio-btn px-2.5 py-1 rounded text-xs font-medium text-purple-200/60 hover:text-white transition">9:16</button>
@@ -137,22 +137,20 @@
 
                     <div class="flex items-center gap-2">
                         <select id="animModeSelect" class="bg-[#09070f] border border-[#231c35] rounded-lg px-2.5 py-1 text-xs font-medium text-purple-200 focus:outline-none focus:border-[#a855f7]">
-                            <option value="cumulative">Cumulative Build</option>
-                            <option value="spotlight">Word Spotlight</option>
-                            <option value="flash">Single Word Cut</option>
-                            <option value="cover-center">Cover Center</option>
+                            <option value="cumulative">Cumulative</option>
+                            <option value="flash">Flash Cut</option>
+                            <option value="spotlight">Spotlight</option>
                         </select>
-                        <div id="recordingBadge" class="hidden items-center px-2 py-0.5 rounded bg-red-500/20 border border-red-500/40 text-red-300 text-[11px] font-mono-code">
+                        <div id="recordingBadge" class="hidden items-center gap-1.5 px-2.5 py-1 rounded bg-red-950/80 border border-red-500/50 text-red-300 text-[11px] font-mono-code font-bold">
+                            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
                             <span id="recordingStatusText">REC 0%</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Canvas Frame -->
-                <div class="w-full flex items-center justify-center min-h-[260px] max-h-[380px] py-2 bg-[#09070f] rounded-lg border border-[#231c35]">
-                    <div id="canvasFrame" class="aspect-square h-[310px] sm:h-[340px] max-w-full rounded overflow-hidden shadow-lg border border-white/10 relative bg-white transition-all duration-150">
-                        <canvas id="bratCanvas" width="1080" height="1080" class="w-full h-full block cursor-pointer" title="Click canvas to cycle color preset"></canvas>
-                    </div>
+                <div id="canvasFrame" class="aspect-square h-[310px] sm:h-[340px] max-w-full rounded overflow-hidden shadow-lg border border-white/10 relative bg-white transition-all duration-150">
+                    <canvas id="bratCanvas" width="1080" height="1080" class="w-full h-full block cursor-pointer" title="Click canvas to cycle theme"></canvas>
                 </div>
 
                 <!-- Status Bar -->
@@ -165,29 +163,83 @@
                 </div>
             </div>
 
-            <!-- Audio Transport & Waveform Panel -->
+            <!-- Enlarged Zoomable Audio Spectrum & Waveform Deck -->
             <div id="audioDropzone" class="bg-[#110d1a] border border-[#231c35] rounded-xl p-4 space-y-3 transition">
                 <div class="flex items-center justify-between gap-2">
                     <span id="audioTrackName" class="text-xs text-purple-200/70 truncate">No audio loaded (Drop file or click Upload)</span>
-                    <label class="cursor-pointer text-xs px-3 py-1.5 rounded-lg bg-[#1a1428] hover:bg-[#251c38] text-purple-200 font-medium border border-[#231c35] transition shrink-0">
-                        <span>Upload Audio</span>
-                        <input type="file" id="audioUploadInput" accept="audio/*" class="hidden">
-                    </label>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <button id="toggleSpectrumOverlayBtn" class="text-[11px] px-2.5 py-1 rounded bg-[#09070f] hover:bg-[#1a1428] text-purple-300 border border-[#231c35] transition">
+                            FFT Overlay: On
+                        </button>
+                        <label class="cursor-pointer text-xs px-3 py-1 rounded bg-[#a855f7] hover:bg-[#9333ea] text-white font-medium transition">
+                            <span>Upload Audio</span>
+                            <input type="file" id="audioUploadInput" accept="audio/*" class="hidden">
+                        </label>
+                    </div>
                 </div>
 
-                <!-- Interactive Waveform & Scrubber -->
-                <div class="rounded-lg bg-[#09070f] border border-[#231c35] p-2.5 space-y-2">
-                    <div class="flex items-center justify-between text-[11px] text-purple-300/50">
-                        <span>Scrub waveform or drag pins</span>
-                        <span id="waveformHoverLabel" class="font-mono-code text-purple-300"></span>
+                <!-- High-Res Zoomable Waveform & Live Sub-Bass Spectrum Container -->
+                <div class="rounded-lg bg-[#09070f] border border-[#231c35] p-3 space-y-2.5">
+                    <!-- Top Zoom & Pan Toolbar -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-purple-300/60 font-medium">Zoom</span>
+                            <button id="zoomOutBtn" class="px-2 py-0.5 rounded bg-[#110d1a] hover:bg-[#1a1428] text-purple-200 border border-[#231c35] font-mono-code">-</button>
+                            <input type="range" id="waveformZoomSlider" min="1" max="32" step="0.5" value="1" class="w-20">
+                            <button id="zoomInBtn" class="px-2 py-0.5 rounded bg-[#110d1a] hover:bg-[#1a1428] text-purple-200 border border-[#231c35] font-mono-code">+</button>
+                            <button id="zoomResetBtn" class="px-2 py-0.5 rounded bg-[#110d1a] hover:bg-[#1a1428] text-purple-300/80 border border-[#231c35] font-mono-code">1.0x</button>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <label class="inline-flex items-center gap-1.5 text-purple-200/70 cursor-pointer select-none">
+                                <input type="checkbox" id="autoFollowToggle" checked class="accent-[#a855f7] rounded">
+                                <span>Follow Playhead</span>
+                            </label>
+                            <span id="waveformHoverLabel" class="font-mono-code text-purple-300 min-w-[70px] text-right">00:00.00</span>
+                        </div>
                     </div>
-                    <div id="waveformClickArea" class="relative w-full h-14 rounded overflow-hidden bg-[#09070f] cursor-ew-resize select-none">
-                        <canvas id="waveformCanvas" width="600" height="56" class="w-full h-14 block"></canvas>
+
+                    <!-- Enlarged 160px Canvas Stage -->
+                    <div id="waveformClickArea" class="relative w-full h-40 rounded-lg overflow-hidden bg-[#07050c] border border-[#1d162b] cursor-ew-resize select-none">
+                        <canvas id="waveformCanvas" width="800" height="160" class="w-full h-40 block"></canvas>
                     </div>
-                    <div class="flex items-center gap-2">
+
+                    <!-- Horizontal Zoom Pan Scrubber -->
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-between text-[10px] font-mono-code text-purple-300/50">
+                            <span id="viewWindowStartLabel">View: 00:00.00</span>
+                            <span>Wheel to Zoom / Shift+Drag to Pan / Drag Pins to Move</span>
+                            <span id="viewWindowEndLabel">00:00.00</span>
+                        </div>
+                        <input type="range" id="waveformPanSlider" min="0" max="1000" step="1" value="0" disabled class="w-full cursor-pointer disabled:opacity-30">
+                    </div>
+
+                    <!-- Full Track Seek Bar -->
+                    <div class="flex items-center gap-2 pt-1 border-t border-[#181224]">
                         <span id="currentTimeLabel" class="text-[11px] font-mono-code text-purple-300 w-14">00:00.00</span>
                         <input type="range" id="audioSeekSlider" min="0" max="100" step="0.01" value="0" disabled class="w-full cursor-pointer disabled:opacity-40">
                         <span id="durationTimeLabel" class="text-[11px] font-mono-code text-purple-300/50 w-14 text-right">00:00.00</span>
+                    </div>
+                </div>
+
+                <!-- Live Sub-Bass Detector Meter Strip (Always Visible Quick Monitor) -->
+                <div class="rounded-lg bg-[#09070f] border border-[#231c35] p-2.5 space-y-1.5">
+                    <div class="flex items-center justify-between text-[11px]">
+                        <div class="flex items-center gap-2">
+                            <span class="font-medium text-purple-200">Sub-Bass Detector</span>
+                            <span id="subBassFreqBadge" class="text-[10px] font-mono-code px-1.5 py-0.5 rounded bg-[#161124] text-purple-300 border border-[#231c35]">LP 55 Hz</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span id="subBassTriggerStatus" class="text-[10px] font-mono-code uppercase text-purple-300/40">IDLE</span>
+                            <button id="openBassSettingsBtn" class="text-[10px] px-2 py-0.5 rounded bg-[#161124] hover:bg-[#221a36] text-purple-300 border border-[#231c35] transition">
+                                Configure
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Live Sub-Bass Energy Bar with Threshold Marker -->
+                    <div id="quickSubMeterTrack" class="relative w-full h-3 rounded bg-[#06040a] border border-[#1d162b] overflow-hidden cursor-pointer" title="Click on meter to set Sub-Bass Gate Threshold">
+                        <div id="quickSubMeterFill" class="h-full bg-[#a855f7] w-0 transition-none"></div>
+                        <div id="quickSubThresholdLine" class="absolute top-0 bottom-0 w-0.5 bg-white z-10" style="left: 42%;"></div>
                     </div>
                 </div>
 
@@ -437,7 +489,90 @@
                     </div>
                 </div>
 
-                <!-- Sliders -->
+                <!-- Dedicated Sub-Bass Pulse Reactor Settings Panel -->
+                <div id="bassReactorSection" class="space-y-3.5 pt-3 border-t border-[#231c35]">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <span class="text-xs font-semibold text-white block">Sub-Bass Pulse Reactor</span>
+                            <span class="text-[11px] text-purple-200/60">Isolates low-end frequencies via 24dB/oct low-pass filter so vocals and synths do not false-trigger the pulse</span>
+                        </div>
+                        <div class="flex items-center gap-1 bg-[#09070f] p-1 rounded-lg border border-[#231c35]">
+                            <button data-bassmode="sub" class="bass-preset-btn px-2.5 py-1 rounded text-[11px] font-medium bg-[#a855f7] text-white transition">Sub Only (55 Hz)</button>
+                            <button data-bassmode="kick" class="bass-preset-btn px-2.5 py-1 rounded text-[11px] font-medium text-purple-200/60 hover:text-white transition">Sub + Kick (95 Hz)</button>
+                            <button data-bassmode="full" class="bass-preset-btn px-2.5 py-1 rounded text-[11px] font-medium text-purple-200/60 hover:text-white transition">Low End (150 Hz)</button>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Live Sub-Bass Calibration Meter -->
+                    <div class="p-3 rounded-lg bg-[#09070f] border border-[#231c35] space-y-2">
+                        <div class="flex items-center justify-between text-[11px] font-mono-code">
+                            <span class="text-purple-200/70">ISOLATED SUB-BASS LEVEL</span>
+                            <span id="styleSubMeterReadout" class="text-purple-300">Level: 0% | Gate: 42%</span>
+                        </div>
+                        <div id="styleSubMeterTrack" class="relative w-full h-5 rounded bg-[#050308] border border-[#1d162b] overflow-hidden cursor-pointer" title="Click or drag to position the Threshold Gate">
+                            <div id="styleSubMeterFill" class="h-full bg-[#a855f7] w-0 transition-none"></div>
+                            <div id="styleSubThresholdLine" class="absolute top-0 bottom-0 w-0.5 bg-white z-10" style="left: 42%;"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-purple-300/40 font-mono-code">
+                            <span>0% (Noise Floor)</span>
+                            <span>White Line = Gate Threshold (Only peaks above line pulse)</span>
+                            <span>100%</span>
+                        </div>
+                    </div>
+
+                    <!-- Bass Reactor Sliders -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-purple-200/80">Low-Pass Cutoff (Sub Isolation)</span>
+                                <span id="bassCutoffVal" class="font-mono-code text-purple-300">55 Hz</span>
+                            </div>
+                            <input type="range" id="bassCutoffSlider" min="28" max="200" step="1" value="55" class="w-full">
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-purple-200/80">Sensitivity / Input Gain</span>
+                                <span id="bassGainVal" class="font-mono-code text-purple-300">1.6x</span>
+                            </div>
+                            <input type="range" id="bassGainSlider" min="0.4" max="4.0" step="0.05" value="1.6" class="w-full">
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-purple-200/80">Threshold Gate</span>
+                                <span id="bassThresholdVal" class="font-mono-code text-purple-300">42%</span>
+                            </div>
+                            <input type="range" id="bassThresholdSlider" min="5" max="92" step="1" value="42" class="w-full">
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-purple-200/80">Pulse Scale Intensity</span>
+                                <span id="bassIntensityVal" class="font-mono-code text-purple-300">12%</span>
+                            </div>
+                            <input type="range" id="bassIntensitySlider" min="2" max="35" step="1" value="12" class="w-full">
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-purple-200/80">Release Decay Smoothing</span>
+                                <span id="bassReleaseVal" class="font-mono-code text-purple-300">Fast (65%)</span>
+                            </div>
+                            <input type="range" id="bassReleaseSlider" min="20" max="94" step="1" value="65" class="w-full">
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-purple-200/80">Sub-Bass Blur Kick</span>
+                                <span id="bassBlurKickVal" class="font-mono-code text-purple-300">1.5px</span>
+                            </div>
+                            <input type="range" id="bassBlurKickSlider" min="0" max="60" step="2" value="15" class="w-full">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Typography Sliders -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-[#231c35]">
                     <div class="space-y-1">
                         <div class="flex justify-between text-xs">
@@ -515,7 +650,7 @@
     <audio id="audioPlayer" crossorigin="anonymous" loop></audio>
 
     <script>
-        const STORAGE_KEY = 'brat_lyric_studio_minimal_purple_v4';
+        const STORAGE_KEY = 'brat_lyric_studio_minimal_purple_v5';
         let cues = [];
         let syncPointerIndex = 0;
         let currentAlign = 'brat-distributed';
@@ -524,6 +659,14 @@
         let waveformPeaks = [];
         let lastActiveCueIdx = -1;
         let flashTriggerUntil = 0;
+
+        /* Zoom & Pan Waveform State */
+        let waveformZoom = 1.0;
+        let waveformViewStartRatio = 0.0;
+        let showSpectrumOverlay = true;
+
+        /* Sub-Bass Reactor Envelope State */
+        let smoothedBassPulse = 0;
 
         const canvas = document.getElementById('bratCanvas');
         const ctx = canvas.getContext('2d');
@@ -540,6 +683,22 @@
         const durationTimeLabel = document.getElementById('durationTimeLabel');
         const waveformCanvas = document.getElementById('waveformCanvas');
         const waveCtx = waveformCanvas.getContext('2d');
+
+        /* Waveform Zoom Controls */
+        const waveformZoomSlider = document.getElementById('waveformZoomSlider');
+        const waveformPanSlider = document.getElementById('waveformPanSlider');
+        const autoFollowToggle = document.getElementById('autoFollowToggle');
+        const viewWindowStartLabel = document.getElementById('viewWindowStartLabel');
+        const viewWindowEndLabel = document.getElementById('viewWindowEndLabel');
+        const toggleSpectrumOverlayBtn = document.getElementById('toggleSpectrumOverlayBtn');
+
+        /* Sub-Bass Controls */
+        const bassCutoffSlider = document.getElementById('bassCutoffSlider');
+        const bassGainSlider = document.getElementById('bassGainSlider');
+        const bassThresholdSlider = document.getElementById('bassThresholdSlider');
+        const bassIntensitySlider = document.getElementById('bassIntensitySlider');
+        const bassReleaseSlider = document.getElementById('bassReleaseSlider');
+        const bassBlurKickSlider = document.getElementById('bassBlurKickSlider');
 
         const bgColorPicker = document.getElementById('bgColorPicker');
         const fgColorPicker = document.getElementById('fgColorPicker');
@@ -598,7 +757,15 @@
                     bg: bgColorPicker.value,
                     fg: fgColorPicker.value,
                     currentAlign,
-                    animMode: animModeSelect.value
+                    animMode: animModeSelect.value,
+                    bassSettings: {
+                        cutoff: bassCutoffSlider.value,
+                        gain: bassGainSlider.value,
+                        threshold: bassThresholdSlider.value,
+                        intensity: bassIntensitySlider.value,
+                        release: bassReleaseSlider.value,
+                        blurKick: bassBlurKickSlider.value
+                    }
                 };
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
             } catch (e) {}
@@ -618,6 +785,15 @@
                     if (data.currentAlign) currentAlign = data.currentAlign;
                     if (data.animMode) animModeSelect.value = data.animMode;
                 }
+                if (data.bassSettings) {
+                    if (data.bassSettings.cutoff) bassCutoffSlider.value = data.bassSettings.cutoff;
+                    if (data.bassSettings.gain) bassGainSlider.value = data.bassSettings.gain;
+                    if (data.bassSettings.threshold) bassThresholdSlider.value = data.bassSettings.threshold;
+                    if (data.bassSettings.intensity) bassIntensitySlider.value = data.bassSettings.intensity;
+                    if (data.bassSettings.release) bassReleaseSlider.value = data.bassSettings.release;
+                    if (data.bassSettings.blurKick !== undefined) bassBlurKickSlider.value = data.bassSettings.blurKick;
+                    updateBassUIReadouts();
+                }
             } catch (e) {}
         }
 
@@ -631,43 +807,206 @@
             showToast('Project reset');
         });
 
-        /* Web Audio Graph */
+        /* Web Audio Graph with Dedicated Sub-Bass Isolation Filter */
         let audioCtx = null;
         let mediaSourceNode = null;
-        let analyserNode = null;
+        let fullSpectrumAnalyser = null;
+        let subBassFilter1 = null;
+        let subBassFilter2 = null;
+        let subBassAnalyser = null;
         let recordDestNode = null;
-        let freqDataArray = null;
+        let fullFreqData = null;
+        let subTimeDomainData = null;
 
         function ensureAudioGraph() {
             if (!audioCtx) {
                 const AudioContextClass = window.AudioContext || window.webkitAudioContext;
                 audioCtx = new AudioContextClass();
                 mediaSourceNode = audioCtx.createMediaElementSource(audioPlayer);
-                analyserNode = audioCtx.createAnalyser();
-                analyserNode.fftSize = 256;
-                analyserNode.smoothingTimeConstant = 0.72;
-                freqDataArray = new Uint8Array(analyserNode.frequencyBinCount);
+
+                /* Full-range Analyser for live spectrum visual overlay */
+                fullSpectrumAnalyser = audioCtx.createAnalyser();
+                fullSpectrumAnalyser.fftSize = 1024;
+                fullSpectrumAnalyser.smoothingTimeConstant = 0.75;
+                fullFreqData = new Uint8Array(fullSpectrumAnalyser.frequencyBinCount);
+
+                /* Cascaded 24dB/oct Low-Pass Filter specifically for Sub-Bass Isolation */
+                const initialCutoff = parseFloat(bassCutoffSlider.value) || 55;
+                subBassFilter1 = audioCtx.createBiquadFilter();
+                subBassFilter1.type = 'lowpass';
+                subBassFilter1.frequency.value = initialCutoff;
+                subBassFilter1.Q.value = 0.707;
+
+                subBassFilter2 = audioCtx.createBiquadFilter();
+                subBassFilter2.type = 'lowpass';
+                subBassFilter2.frequency.value = initialCutoff;
+                subBassFilter2.Q.value = 0.707;
+
+                subBassAnalyser = audioCtx.createAnalyser();
+                subBassAnalyser.fftSize = 1024;
+                subBassAnalyser.smoothingTimeConstant = 0.2;
+                subTimeDomainData = new Float32Array(subBassAnalyser.fftSize);
 
                 recordDestNode = audioCtx.createMediaStreamDestination();
-                mediaSourceNode.connect(analyserNode);
-                analyserNode.connect(audioCtx.destination);
-                analyserNode.connect(recordDestNode);
+
+                /* Main Audio Path -> Speakers & Video Recorder */
+                mediaSourceNode.connect(fullSpectrumAnalyser);
+                fullSpectrumAnalyser.connect(audioCtx.destination);
+                fullSpectrumAnalyser.connect(recordDestNode);
+
+                /* Parallel Isolated Sub-Bass Detection Path (not routed to speakers) */
+                mediaSourceNode.connect(subBassFilter1);
+                subBassFilter1.connect(subBassFilter2);
+                subBassFilter2.connect(subBassAnalyser);
             }
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
         }
 
-        function getBassEnergy() {
-            if (!analyserNode || !freqDataArray || audioPlayer.paused) return 0;
-            analyserNode.getByteFrequencyData(freqDataArray);
-            let sum = 0;
-            const bins = 8;
-            for (let i = 0; i < bins; i++) {
-                sum += freqDataArray[i];
+        function updateSubBassFilterCutoff() {
+            const hz = parseFloat(bassCutoffSlider.value) || 55;
+            if (subBassFilter1 && subBassFilter2 && audioCtx) {
+                subBassFilter1.frequency.setTargetAtTime(hz, audioCtx.currentTime, 0.015);
+                subBassFilter2.frequency.setTargetAtTime(hz, audioCtx.currentTime, 0.015);
             }
-            return sum / (bins * 255);
         }
+
+        /* Compute Isolated Sub-Bass RMS Energy & Gate Envelope */
+        function computeSubBassPulseState() {
+            const gain = parseFloat(bassGainSlider.value);
+            const thresholdPct = parseInt(bassThresholdSlider.value, 10);
+            const thresholdNorm = thresholdPct / 100;
+            const releaseFactor = parseInt(bassReleaseSlider.value, 10) / 100;
+
+            let rawSubLevel = 0;
+
+            if (subBassAnalyser && subTimeDomainData && !audioPlayer.paused) {
+                subBassAnalyser.getFloatTimeDomainData(subTimeDomainData);
+                let sumSquares = 0;
+                const len = subTimeDomainData.length;
+                for (let i = 0; i < len; i++) {
+                    const sample = subTimeDomainData[i];
+                    sumSquares += sample * sample;
+                }
+                const rms = Math.sqrt(sumSquares / len);
+                rawSubLevel = Math.min(1.0, rms * 3.6 * gain);
+            }
+
+            let gatedTarget = 0;
+            if (rawSubLevel > thresholdNorm) {
+                gatedTarget = Math.min(1.0, (rawSubLevel - thresholdNorm) / Math.max(0.05, 1.0 - thresholdNorm));
+            }
+
+            if (gatedTarget > smoothedBassPulse) {
+                smoothedBassPulse = smoothedBassPulse * 0.25 + gatedTarget * 0.75;
+            } else {
+                smoothedBassPulse = smoothedBassPulse * releaseFactor;
+                if (smoothedBassPulse < 0.005) smoothedBassPulse = 0;
+            }
+
+            const pctWidth = Math.round(rawSubLevel * 100);
+            const isTriggered = gatedTarget > 0.02;
+
+            const quickFill = document.getElementById('quickSubMeterFill');
+            const styleFill = document.getElementById('styleSubMeterFill');
+            const statusEl = document.getElementById('subBassTriggerStatus');
+            const readoutEl = document.getElementById('styleSubMeterReadout');
+
+            if (quickFill) {
+                quickFill.style.width = `${pctWidth}%`;
+                quickFill.style.backgroundColor = isTriggered ? '#e879f9' : '#6b21a8';
+            }
+            if (styleFill) {
+                styleFill.style.width = `${pctWidth}%`;
+                styleFill.style.backgroundColor = isTriggered ? '#e879f9' : '#6b21a8';
+            }
+            if (statusEl) {
+                statusEl.textContent = isTriggered ? 'PULSE HIT' : 'GATED';
+                statusEl.className = isTriggered
+                    ? 'text-[10px] font-mono-code uppercase text-purple-300 font-bold'
+                    : 'text-[10px] font-mono-code uppercase text-purple-300/40';
+            }
+            if (readoutEl) {
+                readoutEl.textContent = `Sub: ${pctWidth}% | Gate: ${thresholdPct}%`;
+            }
+
+            return audioReactiveToggle.checked ? smoothedBassPulse : 0;
+        }
+
+        function updateBassUIReadouts() {
+            const hz = parseInt(bassCutoffSlider.value, 10);
+            const gain = parseFloat(bassGainSlider.value).toFixed(2);
+            const thresh = parseInt(bassThresholdSlider.value, 10);
+            const intensity = parseInt(bassIntensitySlider.value, 10);
+            const release = parseInt(bassReleaseSlider.value, 10);
+            const blurKick = (parseInt(bassBlurKickSlider.value, 10) / 10).toFixed(1);
+
+            document.getElementById('bassCutoffVal').textContent = `${hz} Hz`;
+            document.getElementById('subBassFreqBadge').textContent = `LP ${hz} Hz`;
+            document.getElementById('bassGainVal').textContent = `${gain}x`;
+            document.getElementById('bassThresholdVal').textContent = `${thresh}%`;
+            document.getElementById('bassIntensityVal').textContent = `${intensity}%`;
+            document.getElementById('bassReleaseVal').textContent = `${release}%`;
+            document.getElementById('bassBlurKickVal').textContent = `${blurKick}px`;
+
+            document.getElementById('quickSubThresholdLine').style.left = `${thresh}%`;
+            document.getElementById('styleSubThresholdLine').style.left = `${thresh}%`;
+
+            updateSubBassFilterCutoff();
+        }
+
+        [bassCutoffSlider, bassGainSlider, bassThresholdSlider, bassIntensitySlider, bassReleaseSlider, bassBlurKickSlider].forEach(sl => {
+            sl.addEventListener('input', () => {
+                updateBassUIReadouts();
+                saveProjectToLocalStorage();
+            });
+        });
+
+        function setThresholdFromMeterClick(e, el) {
+            const rect = el.getBoundingClientRect();
+            const pct = Math.max(5, Math.min(92, Math.round(((e.clientX - rect.left) / rect.width) * 100)));
+            bassThresholdSlider.value = pct;
+            updateBassUIReadouts();
+            saveProjectToLocalStorage();
+        }
+
+        document.getElementById('quickSubMeterTrack').addEventListener('mousedown', (e) => {
+            setThresholdFromMeterClick(e, e.currentTarget);
+        });
+        document.getElementById('styleSubMeterTrack').addEventListener('mousedown', (e) => {
+            setThresholdFromMeterClick(e, e.currentTarget);
+        });
+
+        document.getElementById('openBassSettingsBtn').addEventListener('click', () => {
+            switchToTab('styleTab');
+            document.getElementById('bassReactorSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+
+        document.querySelectorAll('.bass-preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const mode = btn.getAttribute('data-bassmode');
+                document.querySelectorAll('.bass-preset-btn').forEach(b => {
+                    b.className = 'bass-preset-btn px-2.5 py-1 rounded text-[11px] font-medium text-purple-200/60 hover:text-white transition';
+                });
+                btn.className = 'bass-preset-btn px-2.5 py-1 rounded text-[11px] font-medium bg-[#a855f7] text-white transition';
+
+                if (mode === 'sub') {
+                    bassCutoffSlider.value = 55;
+                } else if (mode === 'kick') {
+                    bassCutoffSlider.value = 95;
+                } else if (mode === 'full') {
+                    bassCutoffSlider.value = 150;
+                }
+                updateBassUIReadouts();
+                saveProjectToLocalStorage();
+            });
+        });
+
+        toggleSpectrumOverlayBtn.addEventListener('click', () => {
+            showSpectrumOverlay = !showSpectrumOverlay;
+            toggleSpectrumOverlayBtn.textContent = `FFT Overlay: ${showSpectrumOverlay ? 'On' : 'Off'}`;
+        });
 
         async function loadUserAudioFile(file) {
             if (!file) return;
@@ -690,22 +1029,23 @@
                 const tempCtx = new OfflineCtx();
                 const audioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
                 const rawData = audioBuffer.getChannelData(0);
-                const samples = 140;
-                const blockSize = Math.floor(rawData.length / samples);
+                const samples = 2400;
+                const blockSize = Math.max(1, Math.floor(rawData.length / samples));
                 const peaks = [];
+                const stride = Math.max(1, Math.floor(blockSize / 32));
                 for (let i = 0; i < samples; i++) {
-                    let sum = 0;
+                    let maxPeak = 0;
                     const start = i * blockSize;
-                    for (let j = 0; j < blockSize; j += 10) {
+                    for (let j = 0; j < blockSize; j += stride) {
                         const val = Math.abs(rawData[start + j] || 0);
-                        if (val > sum) sum = val;
+                        if (val > maxPeak) maxPeak = val;
                     }
-                    peaks.push(Math.max(0.08, Math.min(1, sum)));
+                    peaks.push(Math.max(0.03, Math.min(1, maxPeak)));
                 }
                 waveformPeaks = peaks;
                 tempCtx.close();
             } catch (err) {
-                waveformPeaks = Array.from({ length: 140 }, (_, i) => 0.25 + 0.5 * Math.abs(Math.sin(i * 0.25)));
+                waveformPeaks = Array.from({ length: 1200 }, (_, i) => 0.25 + 0.5 * Math.abs(Math.sin(i * 0.15)));
             }
         }
 
@@ -731,30 +1071,93 @@
             }
         });
 
-        /* Interactive Waveform Scrubber & Pin Dragging */
+        function setWaveformZoom(newZoom, anchorRatio = null) {
+            const clampedZoom = Math.max(1.0, Math.min(32.0, newZoom));
+            const oldVisibleSpan = 1.0 / waveformZoom;
+            const newVisibleSpan = 1.0 / clampedZoom;
+
+            const focusRatio = anchorRatio !== null
+                ? anchorRatio
+                : (hasAudioLoaded && isFinite(audioPlayer.duration) && audioPlayer.duration > 0
+                    ? (audioPlayer.currentTime / audioPlayer.duration)
+                    : (waveformViewStartRatio + oldVisibleSpan / 2));
+
+            waveformZoom = clampedZoom;
+            waveformZoomSlider.value = waveformZoom;
+            document.getElementById('zoomResetBtn').textContent = `${waveformZoom.toFixed(1)}x`;
+
+            const maxStart = Math.max(0, 1.0 - newVisibleSpan);
+            waveformViewStartRatio = Math.max(0, Math.min(maxStart, focusRatio - newVisibleSpan / 2));
+
+            waveformPanSlider.disabled = waveformZoom <= 1.01;
+            if (maxStart > 0) {
+                waveformPanSlider.value = Math.round((waveformViewStartRatio / maxStart) * 1000);
+            } else {
+                waveformPanSlider.value = 0;
+            }
+        }
+
+        waveformZoomSlider.addEventListener('input', () => {
+            setWaveformZoom(parseFloat(waveformZoomSlider.value));
+        });
+
+        document.getElementById('zoomInBtn').addEventListener('click', () => {
+            setWaveformZoom(waveformZoom * 1.5);
+        });
+
+        document.getElementById('zoomOutBtn').addEventListener('click', () => {
+            setWaveformZoom(waveformZoom / 1.5);
+        });
+
+        document.getElementById('zoomResetBtn').addEventListener('click', () => {
+            setWaveformZoom(1.0);
+        });
+
+        waveformPanSlider.addEventListener('input', () => {
+            const visibleSpan = 1.0 / waveformZoom;
+            const maxStart = Math.max(0, 1.0 - visibleSpan);
+            waveformViewStartRatio = (parseFloat(waveformPanSlider.value) / 1000) * maxStart;
+            autoFollowToggle.checked = false;
+        });
+
         const waveformClickArea = document.getElementById('waveformClickArea');
         const waveformHoverLabel = document.getElementById('waveformHoverLabel');
-        let draggingCueIdx = -1;
-        let isScrubbingWaveform = false;
+        let isPanningWaveform = false;
+        let panDragStartX = 0;
+        let panStartRatio = 0;
         let hoveredCueIdx = -1;
 
         function getWaveformTimeFromEvent(e) {
             const rect = waveformClickArea.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+            const localRatio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+            const visibleSpan = 1.0 / waveformZoom;
+            const globalRatio = Math.max(0, Math.min(1, waveformViewStartRatio + localRatio * visibleSpan));
             const dur = (hasAudioLoaded && isFinite(audioPlayer.duration) && audioPlayer.duration > 0) ? audioPlayer.duration : 12;
-            return { ratio, time: ratio * dur, xPx: (clientX - rect.left) * (waveformCanvas.width / rect.width) };
+            return {
+                localRatio,
+                globalRatio,
+                time: globalRatio * dur,
+                xPx: localRatio * waveformCanvas.width
+            };
+        }
+
+        function timeToCanvasX(timeSec, duration) {
+            if (!duration || duration <= 0) return -100;
+            const globalRatio = timeSec / duration;
+            const visibleSpan = 1.0 / waveformZoom;
+            const localRatio = (globalRatio - waveformViewStartRatio) / visibleSpan;
+            return localRatio * waveformCanvas.width;
         }
 
         function findCuePinNearX(canvasX) {
             if (!hasAudioLoaded || !isFinite(audioPlayer.duration) || audioPlayer.duration <= 0) return -1;
             const dur = audioPlayer.duration;
-            const w = waveformCanvas.width;
             let bestIdx = -1;
-            let minDist = 10;
+            let minDist = 11;
             for (let i = 0; i < cues.length; i++) {
                 if (cues[i].start !== null) {
-                    const cx = (cues[i].start / dur) * w;
+                    const cx = timeToCanvasX(cues[i].start, dur);
                     const d = Math.abs(cx - canvasX);
                     if (d < minDist) {
                         minDist = d;
@@ -765,9 +1168,25 @@
             return bestIdx;
         }
 
+        waveformClickArea.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const info = getWaveformTimeFromEvent(e);
+            const zoomFactor = e.deltaY < 0 ? 1.25 : 0.8;
+            setWaveformZoom(waveformZoom * zoomFactor, info.globalRatio);
+        }, { passive: false });
+
         waveformClickArea.addEventListener('mousedown', (e) => {
             if (!hasAudioLoaded) return;
             const info = getWaveformTimeFromEvent(e);
+
+            if (e.shiftKey || e.button === 1) {
+                isPanningWaveform = true;
+                panDragStartX = e.clientX;
+                panStartRatio = waveformViewStartRatio;
+                autoFollowToggle.checked = false;
+                return;
+            }
+
             const nearPin = findCuePinNearX(info.xPx);
             if (nearPin !== -1) {
                 draggingCueIdx = nearPin;
@@ -780,6 +1199,19 @@
 
         window.addEventListener('mousemove', (e) => {
             if (!hasAudioLoaded) return;
+
+            if (isPanningWaveform) {
+                const rect = waveformClickArea.getBoundingClientRect();
+                const deltaX = e.clientX - panDragStartX;
+                const visibleSpan = 1.0 / waveformZoom;
+                const maxStart = Math.max(0, 1.0 - visibleSpan);
+                waveformViewStartRatio = Math.max(0, Math.min(maxStart, panStartRatio - (deltaX / rect.width) * visibleSpan));
+                if (maxStart > 0) {
+                    waveformPanSlider.value = Math.round((waveformViewStartRatio / maxStart) * 1000);
+                }
+                return;
+            }
+
             if (draggingCueIdx !== -1 && cues[draggingCueIdx]) {
                 const info = getWaveformTimeFromEvent(e);
                 cues[draggingCueIdx].start = parseFloat(info.time.toFixed(2));
@@ -795,27 +1227,27 @@
         });
 
         waveformClickArea.addEventListener('mousemove', (e) => {
-            if (draggingCueIdx !== -1 || isScrubbingWaveform) return;
+            if (draggingCueIdx !== -1 || isScrubbingWaveform || isPanningWaveform) return;
             const info = getWaveformTimeFromEvent(e);
             hoveredCueIdx = findCuePinNearX(info.xPx);
             if (hoveredCueIdx !== -1 && cues[hoveredCueIdx]) {
                 const c = cues[hoveredCueIdx];
                 waveformHoverLabel.textContent = `#${hoveredCueIdx + 1} "${c.text}" (${c.start.toFixed(2)}s)`;
             } else {
-                waveformHoverLabel.textContent = hasAudioLoaded ? `${info.time.toFixed(2)}s` : '';
+                waveformHoverLabel.textContent = hasAudioLoaded ? formatTimePrecise(info.time) : '00:00.00';
             }
         });
 
         waveformClickArea.addEventListener('mouseleave', () => {
             if (draggingCueIdx === -1) {
                 hoveredCueIdx = -1;
-                waveformHoverLabel.textContent = '';
             }
         });
 
         window.addEventListener('mouseup', () => {
             draggingCueIdx = -1;
             isScrubbingWaveform = false;
+            isPanningWaveform = false;
         });
 
         function drawWaveformAndCues() {
@@ -827,46 +1259,144 @@
             const cur = audioPlayer.currentTime || 0;
             const progressRatio = dur > 0 ? (cur / dur) : 0;
 
+            const visibleSpan = 1.0 / waveformZoom;
+            const maxStart = Math.max(0, 1.0 - visibleSpan);
+
+            if (hasAudioLoaded && !audioPlayer.paused && autoFollowToggle.checked && waveformZoom > 1.01 && !isPanningWaveform && !isScrubbingWaveform) {
+                if (progressRatio < waveformViewStartRatio + visibleSpan * 0.1 || progressRatio > waveformViewStartRatio + visibleSpan * 0.85) {
+                    waveformViewStartRatio = Math.max(0, Math.min(maxStart, progressRatio - visibleSpan * 0.25));
+                    if (maxStart > 0) {
+                        waveformPanSlider.value = Math.round((waveformViewStartRatio / maxStart) * 1000);
+                    }
+                }
+            }
+
+            const viewStartSec = dur * waveformViewStartRatio;
+            const viewEndSec = dur * Math.min(1.0, waveformViewStartRatio + visibleSpan);
+            viewWindowStartLabel.textContent = `View: ${formatTimePrecise(viewStartSec)}`;
+            viewWindowEndLabel.textContent = `${formatTimePrecise(viewEndSec)} (${waveformZoom.toFixed(1)}x)`;
+
+            if (showSpectrumOverlay && fullSpectrumAnalyser && fullFreqData && !audioPlayer.paused) {
+                fullSpectrumAnalyser.getByteFrequencyData(fullFreqData);
+                const specBins = 64;
+                const binStep = w / specBins;
+                const cutoffRatio = Math.min(1, (parseFloat(bassCutoffSlider.value) || 55) / 220);
+
+                for (let b = 0; b < specBins; b++) {
+                    const val = fullFreqData[b] / 255;
+                    const barH = val * (h - 28);
+                    const isSubBin = (b / specBins) <= cutoffRatio;
+                    waveCtx.fillStyle = isSubBin ? 'rgba(232, 121, 249, 0.22)' : 'rgba(168, 85, 247, 0.10)';
+                    waveCtx.fillRect(b * binStep, h - barH, Math.max(2, binStep - 2), barH);
+                }
+            }
+
+            const rulerH = 20;
+            waveCtx.fillStyle = '#0c0814';
+            waveCtx.fillRect(0, 0, w, rulerH);
+            waveCtx.strokeStyle = '#1e1630';
+            waveCtx.beginPath();
+            waveCtx.moveTo(0, rulerH);
+            waveCtx.lineTo(w, rulerH);
+            waveCtx.stroke();
+
+            if (dur > 0) {
+                const visibleSec = Math.max(0.1, viewEndSec - viewStartSec);
+                let tickStep = 10;
+                if (visibleSec <= 3) tickStep = 0.25;
+                else if (visibleSec <= 7) tickStep = 0.5;
+                else if (visibleSec <= 16) tickStep = 1;
+                else if (visibleSec <= 35) tickStep = 2;
+                else if (visibleSec <= 90) tickStep = 5;
+
+                const firstTick = Math.ceil(viewStartSec / tickStep) * tickStep;
+                waveCtx.fillStyle = '#7e6b9e';
+                waveCtx.font = '10px monospace';
+                waveCtx.textAlign = 'center';
+
+                for (let t = firstTick; t <= viewEndSec; t += tickStep) {
+                    const tx = timeToCanvasX(t, dur);
+                    waveCtx.strokeStyle = '#191229';
+                    waveCtx.beginPath();
+                    waveCtx.moveTo(tx, rulerH);
+                    waveCtx.lineTo(tx, h);
+                    waveCtx.stroke();
+
+                    waveCtx.fillStyle = '#6d5a8f';
+                    waveCtx.fillRect(tx - 0.5, rulerH - 4, 1, 4);
+                    waveCtx.fillText(t.toFixed(tickStep < 1 ? 2 : 0) + 's', tx, 13);
+                }
+            }
+
             if (waveformPeaks.length === 0) {
                 waveCtx.fillStyle = '#231c35';
-                waveCtx.fillRect(0, h / 2 - 1, w, 2);
+                waveCtx.fillRect(0, (h + rulerH) / 2 - 1, w, 2);
                 return;
             }
 
-            const barCount = waveformPeaks.length;
-            const step = w / barCount;
-            const barW = Math.max(2, step - 1.4);
+            const numBarsOnScreen = 180;
+            const stepPx = w / numBarsOnScreen;
+            const barW = Math.max(2, stepPx - 1.4);
+            const totalBuckets = waveformPeaks.length;
+            const waveCenterY = rulerH + (h - rulerH) / 2;
+            const maxWaveH = h - rulerH - 16;
 
-            for (let i = 0; i < barCount; i++) {
-                const barRatio = i / barCount;
-                const peak = waveformPeaks[i];
-                const barH = Math.max(4, peak * (h - 16));
-                const x = i * step;
-                const y = 10 + (h - 12 - barH) / 2;
+            for (let i = 0; i < numBarsOnScreen; i++) {
+                const sliceStartRatio = waveformViewStartRatio + (i / numBarsOnScreen) * visibleSpan;
+                const sliceEndRatio = waveformViewStartRatio + ((i + 1) / numBarsOnScreen) * visibleSpan;
 
-                waveCtx.fillStyle = barRatio <= progressRatio ? '#a855f7' : '#261e38';
+                const bStart = Math.max(0, Math.floor(sliceStartRatio * totalBuckets));
+                const bEnd = Math.min(totalBuckets - 1, Math.ceil(sliceEndRatio * totalBuckets));
+
+                let peak = 0.04;
+                for (let k = bStart; k <= bEnd; k++) {
+                    if (waveformPeaks[k] > peak) peak = waveformPeaks[k];
+                }
+
+                const barH = Math.max(4, peak * maxWaveH);
+                const x = i * stepPx;
+                const y = waveCenterY - barH / 2;
+
+                const isPlayed = sliceStartRatio <= progressRatio;
+                waveCtx.fillStyle = isPlayed ? '#a855f7' : '#2a2040';
                 waveCtx.fillRect(x, y, barW, barH);
             }
 
             if (dur > 0) {
+                waveCtx.font = '10px Inter, sans-serif';
+                waveCtx.textAlign = 'left';
+
                 for (let i = 0; i < cues.length; i++) {
                     if (cues[i].start !== null) {
-                        const cx = (cues[i].start / dur) * w;
+                        const cx = timeToCanvasX(cues[i].start, dur);
+                        if (cx < -20 || cx > w + 20) continue;
+
                         const isHoveredOrDragged = (i === hoveredCueIdx || i === draggingCueIdx);
                         const pinColor = isHoveredOrDragged ? '#e879f9' : (cues[i].newBlock ? '#FFFFFF' : '#c084fc');
 
                         waveCtx.fillStyle = pinColor;
-                        waveCtx.fillRect(cx - 0.75, 6, 1.5, h - 6);
+                        waveCtx.fillRect(cx - 0.75, rulerH, 1.5, h - rulerH);
 
                         waveCtx.beginPath();
-                        waveCtx.arc(cx, 5, isHoveredOrDragged ? 4.5 : 3, 0, Math.PI * 2);
+                        waveCtx.arc(cx, rulerH + 6, isHoveredOrDragged ? 5 : 3.5, 0, Math.PI * 2);
                         waveCtx.fill();
+
+                        if (waveformZoom >= 2.5 || isHoveredOrDragged || cues[i].newBlock) {
+                            const labelText = cues[i].isBlank ? '[blank]' : cues[i].text.slice(0, 12);
+                            waveCtx.fillStyle = 'rgba(9, 7, 15, 0.82)';
+                            const tw = waveCtx.measureText(labelText).width;
+                            waveCtx.fillRect(cx + 4, rulerH + 2, tw + 6, 14);
+                            waveCtx.fillStyle = pinColor;
+                            waveCtx.fillText(labelText, cx + 7, rulerH + 12);
+                        }
                     }
                 }
 
-                const playX = progressRatio * w;
-                waveCtx.fillStyle = '#ffffff';
-                waveCtx.fillRect(playX - 1, 0, 2, h);
+                const playX = timeToCanvasX(cur, dur);
+                if (playX >= 0 && playX <= w) {
+                    waveCtx.fillStyle = '#ffffff';
+                    waveCtx.fillRect(playX - 1, 0, 2, h);
+                }
             }
         }
 
@@ -1507,7 +2037,7 @@
             }
 
             let visibleTokens = [];
-            if (mode === 'flash' || mode === 'cover-center') {
+            if (mode === 'flash') {
                 visibleTokens = [{
                     text: isLower ? activeCue.text.trim().toLowerCase() : activeCue.text.trim(),
                     isCurrent: true,
@@ -1526,7 +2056,7 @@
             const W = canvas.width;
             const H = canvas.height;
             const nowTime = audioPlayer.currentTime || 0;
-            const bassEnergy = audioReactiveToggle.checked ? getBassEnergy() : 0;
+            const bassPulseValue = computeSubBassPulseState();
 
             const state = getActiveScreenStateAtTime(nowTime);
 
@@ -1593,8 +2123,9 @@
             offCtx.fillRect(0, 0, offW, offH);
             offCtx.scale(offW / W, offH / H);
 
-            if (bassEnergy > 0.35) {
-                const bump = 1 + (bassEnergy - 0.35) * 0.055;
+            const maxScaleIntensity = (parseInt(bassIntensitySlider.value, 10) || 12) / 100;
+            if (bassPulseValue > 0.01) {
+                const bump = 1 + bassPulseValue * maxScaleIntensity;
                 offCtx.translate(W / 2, H / 2);
                 offCtx.scale(bump, bump);
                 offCtx.translate(-W / 2, -H / 2);
@@ -1619,7 +2150,7 @@
 
             if (isAutoFit && referenceTokens.length > 0) {
                 let low = 34;
-                let high = mode === 'cover-center' ? 320 : 280;
+                let high = 280;
                 let best = 120;
                 while (low <= high) {
                     const mid = Math.floor((low + high) / 2);
@@ -1649,8 +2180,11 @@
                 offCtx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
                 const wrappedLines = wrapTokensIntoLines(offCtx, state.visibleTokens, availWidth);
 
-                if (blurAmount > 0) {
-                    offCtx.filter = `blur(${(blurAmount * (offW / W)).toFixed(2)}px)`;
+                const extraBassBlur = bassPulseValue * ((parseInt(bassBlurKickSlider.value, 10) || 0) / 10);
+                const totalBlur = blurAmount + extraBassBlur;
+
+                if (totalBlur > 0) {
+                    offCtx.filter = `blur(${(totalBlur * (offW / W)).toFixed(2)}px)`;
                 } else {
                     offCtx.filter = 'none';
                 }
@@ -1660,7 +2194,7 @@
                 const totalBlockHeight = wrappedLines.length * lineStep;
 
                 let startY = pad;
-                if (currentAlign === 'center' || mode === 'cover-center') {
+                if (currentAlign === 'center') {
                     startY = (H - totalBlockHeight) / 2;
                 }
 
@@ -1671,7 +2205,7 @@
                     const lineTokens = wrappedLines[i];
                     const y = startY + i * lineStep;
 
-                    if (currentAlign === 'brat-distributed' && mode !== 'cover-center' && lineTokens.length > 1) {
+                    if (currentAlign === 'brat-distributed' && lineTokens.length > 1) {
                         const totalWordsW = lineTokens.reduce((acc, tk) => acc + offCtx.measureText(tk.text).width, 0);
                         const spaceW = Math.max(18, (availWidth - totalWordsW) / (lineTokens.length - 1));
                         let curX = pad / condenseRatio;
@@ -1681,7 +2215,7 @@
                             drawSingleToken(offCtx, tk, curX, y, fg, mode);
                             curX += wordW + spaceW;
                         }
-                    } else if (currentAlign === 'center' || mode === 'cover-center') {
+                    } else if (currentAlign === 'center') {
                         const fullLineStr = lineTokens.map(t => t.text).join(' ');
                         const lw = offCtx.measureText(fullLineStr).width;
                         let curX = (W / condenseRatio - lw) / 2;
@@ -2025,6 +2559,7 @@
 
         window.onload = () => {
             loadProjectFromLocalStorage();
+            updateBassUIReadouts();
             refreshAllSyncViews();
             requestAnimationFrame(studioLoop);
         };
