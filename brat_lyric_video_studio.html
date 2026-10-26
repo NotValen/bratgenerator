@@ -1,0 +1,2033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>brat lyric video studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=PT+Sans+Narrow:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #09070f;
+            --bg-panel: #110d1a;
+            --border-color: #231c35;
+            --accent: #a855f7;
+            --accent-hover: #9333ea;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-main);
+            color: #f3effb;
+            overflow-x: hidden;
+        }
+        .font-mono-code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+        .font-brat {
+            font-family: 'PT Sans Narrow', 'Arial Narrow', Arial, sans-serif;
+        }
+        /* Minimalist Purple Range Slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: #1e172e;
+            height: 4px;
+            border-radius: 999px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #a855f7;
+            cursor: pointer;
+            border: 2px solid #09070f;
+            transition: background-color 0.15s ease, transform 0.12s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #c084fc;
+            transform: scale(1.15);
+        }
+        /* Minimal Scrollbars */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #09070f;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #28203d;
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a855f7;
+        }
+        .cue-playing {
+            border-color: #a855f7 !important;
+            background-color: rgba(168, 85, 247, 0.12) !important;
+        }
+        .cue-next-up {
+            border-color: #c084fc !important;
+        }
+        .dropzone-active {
+            border-color: #a855f7 !important;
+            background-color: rgba(168, 85, 247, 0.08) !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-[#a855f7] selection:text-white">
+
+    <!-- Minimal Top Header -->
+    <header class="border-b border-[#231c35] bg-[#09070f] sticky top-0 z-40">
+        <div class="max-w-[1400px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div id="brandLogoBox" class="px-2.5 py-1 rounded bg-[#a855f7] text-white font-bold text-base tracking-tighter select-none cursor-pointer font-brat" title="Click to toggle canvas color theme">
+                    brat
+                </div>
+                <span class="font-semibold text-sm tracking-tight text-white">lyric video studio</span>
+            </div>
+
+            <div class="flex items-center flex-wrap gap-2">
+                <button id="resetProjectBtn" class="text-xs px-3 py-1.5 rounded-lg bg-[#110d1a] hover:bg-[#1a1428] text-purple-200/70 hover:text-white border border-[#231c35] transition">
+                    Reset
+                </button>
+                <button id="snapshotPngBtn" class="text-xs px-3 py-1.5 rounded-lg bg-[#110d1a] hover:bg-[#1a1428] text-purple-100 border border-[#231c35] transition">
+                    PNG
+                </button>
+                <button id="exportJsonBtn" class="text-xs px-3 py-1.5 rounded-lg bg-[#110d1a] hover:bg-[#1a1428] text-purple-100 border border-[#231c35] transition">
+                    Save JSON
+                </button>
+                <label class="cursor-pointer text-xs px-3 py-1.5 rounded-lg bg-[#110d1a] hover:bg-[#1a1428] text-purple-100 border border-[#231c35] transition">
+                    <span>Load File</span>
+                    <input type="file" id="importTimingFileInput" accept=".lrc,.json,.txt" class="hidden">
+                </label>
+                <button id="exportLrcBtn" class="text-xs px-3 py-1.5 rounded-lg bg-[#110d1a] hover:bg-[#1a1428] text-purple-100 border border-[#231c35] transition">
+                    Export LRC
+                </button>
+                <button id="exportVideoBtn" class="text-xs px-3.5 py-1.5 rounded-lg bg-[#a855f7] hover:bg-[#9333ea] text-white font-semibold transition">
+                    Export Video
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Status Notification Toast -->
+    <div id="toastBanner" class="fixed bottom-5 right-5 z-50 hidden items-center px-4 py-2.5 rounded-lg bg-[#110d1a] border border-[#a855f7] text-white text-xs font-medium shadow-xl">
+        <span id="toastMessage">Ready</span>
+    </div>
+
+    <!-- Main Workspace -->
+    <main class="max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-5 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow items-start">
+
+        <!-- LEFT COLUMN: Video Preview & Audio Transport (5 cols) -->
+        <div class="lg:col-span-5 flex flex-col gap-4 lg:sticky lg:top-20">
+
+            <!-- Video Stage Panel -->
+            <div class="bg-[#110d1a] rounded-xl border border-[#231c35] p-4 flex flex-col items-center">
+                <!-- Aspect Ratio & Mode Controls -->
+                <div class="w-full flex flex-wrap items-center justify-between mb-3 gap-2">
+                    <div class="flex items-center gap-1 bg-[#09070f] p-1 rounded-lg border border-[#231c35]">
+                        <button data-ratio="1:1" class="ratio-btn px-2.5 py-1 rounded text-xs font-medium bg-[#a855f7] text-white transition">1:1</button>
+                        <button data-ratio="9:16" class="ratio-btn px-2.5 py-1 rounded text-xs font-medium text-purple-200/60 hover:text-white transition">9:16</button>
+                        <button data-ratio="16:9" class="ratio-btn px-2.5 py-1 rounded text-xs font-medium text-purple-200/60 hover:text-white transition">16:9</button>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <select id="animModeSelect" class="bg-[#09070f] border border-[#231c35] rounded-lg px-2.5 py-1 text-xs font-medium text-purple-200 focus:outline-none focus:border-[#a855f7]">
+                            <option value="cumulative">Cumulative Build</option>
+                            <option value="spotlight">Word Spotlight</option>
+                            <option value="flash">Single Word Cut</option>
+                            <option value="cover-center">Cover Center</option>
+                        </select>
+                        <div id="recordingBadge" class="hidden items-center px-2 py-0.5 rounded bg-red-500/20 border border-red-500/40 text-red-300 text-[11px] font-mono-code">
+                            <span id="recordingStatusText">REC 0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Canvas Frame -->
+                <div class="w-full flex items-center justify-center min-h-[260px] max-h-[380px] py-2 bg-[#09070f] rounded-lg border border-[#231c35]">
+                    <div id="canvasFrame" class="aspect-square h-[310px] sm:h-[340px] max-w-full rounded overflow-hidden shadow-lg border border-white/10 relative bg-white transition-all duration-150">
+                        <canvas id="bratCanvas" width="1080" height="1080" class="w-full h-full block cursor-pointer" title="Click canvas to cycle color preset"></canvas>
+                    </div>
+                </div>
+
+                <!-- Status Bar -->
+                <div class="w-full mt-3 flex items-center justify-between text-xs px-3 py-2 rounded-lg bg-[#09070f] border border-[#231c35]">
+                    <div class="flex items-center gap-2 truncate">
+                        <span id="activeCueIndexBadge" class="text-[11px] font-mono-code text-purple-400">STANDBY</span>
+                        <span id="activeCuePreviewText" class="text-purple-100/70 truncate">Upload audio and add lyrics</span>
+                    </div>
+                    <span id="canvasResolutionLabel" class="text-[11px] font-mono-code text-purple-300/40 shrink-0 ml-2">1080x1080</span>
+                </div>
+            </div>
+
+            <!-- Audio Transport & Waveform Panel -->
+            <div id="audioDropzone" class="bg-[#110d1a] border border-[#231c35] rounded-xl p-4 space-y-3 transition">
+                <div class="flex items-center justify-between gap-2">
+                    <span id="audioTrackName" class="text-xs text-purple-200/70 truncate">No audio loaded (Drop file or click Upload)</span>
+                    <label class="cursor-pointer text-xs px-3 py-1.5 rounded-lg bg-[#1a1428] hover:bg-[#251c38] text-purple-200 font-medium border border-[#231c35] transition shrink-0">
+                        <span>Upload Audio</span>
+                        <input type="file" id="audioUploadInput" accept="audio/*" class="hidden">
+                    </label>
+                </div>
+
+                <!-- Interactive Waveform & Scrubber -->
+                <div class="rounded-lg bg-[#09070f] border border-[#231c35] p-2.5 space-y-2">
+                    <div class="flex items-center justify-between text-[11px] text-purple-300/50">
+                        <span>Scrub waveform or drag pins</span>
+                        <span id="waveformHoverLabel" class="font-mono-code text-purple-300"></span>
+                    </div>
+                    <div id="waveformClickArea" class="relative w-full h-14 rounded overflow-hidden bg-[#09070f] cursor-ew-resize select-none">
+                        <canvas id="waveformCanvas" width="600" height="56" class="w-full h-14 block"></canvas>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="currentTimeLabel" class="text-[11px] font-mono-code text-purple-300 w-14">00:00.00</span>
+                        <input type="range" id="audioSeekSlider" min="0" max="100" step="0.01" value="0" disabled class="w-full cursor-pointer disabled:opacity-40">
+                        <span id="durationTimeLabel" class="text-[11px] font-mono-code text-purple-300/50 w-14 text-right">00:00.00</span>
+                    </div>
+                </div>
+
+                <!-- Transport Controls -->
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5">
+                        <button id="playPauseBtn" disabled class="py-1.5 px-4 rounded-lg bg-[#a855f7] hover:bg-[#9333ea] disabled:opacity-40 disabled:pointer-events-none text-white font-semibold text-xs transition">
+                            <span id="playBtnText">Play</span>
+                        </button>
+                        <button id="restartAudioBtn" disabled class="py-1.5 px-2.5 rounded-lg bg-[#09070f] hover:bg-[#1a1428] disabled:opacity-40 text-purple-200 text-xs font-mono-code border border-[#231c35] transition">
+                            0:00
+                        </button>
+                        <button id="back2SecBtn" disabled class="py-1.5 px-2.5 rounded-lg bg-[#09070f] hover:bg-[#1a1428] disabled:opacity-40 text-purple-200 text-xs font-mono-code border border-[#231c35] transition">
+                            -2.0s
+                        </button>
+                        <label class="inline-flex items-center gap-1.5 text-xs text-purple-200/70 ml-1 cursor-pointer select-none">
+                            <input type="checkbox" id="loopAudioToggle" checked class="accent-[#a855f7] rounded">
+                            <span>Loop</span>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center gap-1 bg-[#09070f] p-1 rounded-lg border border-[#231c35]">
+                        <button data-speed="0.5" class="speed-btn px-2 py-0.5 rounded text-[11px] font-mono-code text-purple-200/60 hover:text-white transition">0.5x</button>
+                        <button data-speed="0.75" class="speed-btn px-2 py-0.5 rounded text-[11px] font-mono-code text-purple-200/60 hover:text-white transition">0.75x</button>
+                        <button data-speed="1" class="speed-btn px-2 py-0.5 rounded text-[11px] font-mono-code bg-[#a855f7] text-white transition">1.0x</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: 4-Tab Editor Workspace (7 cols) -->
+        <div class="lg:col-span-7 flex flex-col gap-4">
+
+            <!-- Clean 4-Tab Navigation -->
+            <div class="bg-[#110d1a] border border-[#231c35] rounded-xl p-1 grid grid-cols-4 gap-1">
+                <button data-tab="lyricsSetupTab" class="studio-tab-btn py-2 px-3 rounded-lg text-xs font-semibold bg-[#a855f7] text-white transition">
+                    1. Lyrics
+                </button>
+                <button data-tab="liveSyncTab" class="studio-tab-btn py-2 px-3 rounded-lg text-xs font-semibold text-purple-200/70 hover:text-white transition flex items-center justify-center gap-1.5">
+                    <span>2. Tap Sync</span>
+                    <span id="unonSyncedBadge" class="text-[10px] font-mono-code opacity-75">0/0</span>
+                </button>
+                <button data-tab="cueListTab" class="studio-tab-btn py-2 px-3 rounded-lg text-xs font-semibold text-purple-200/70 hover:text-white transition">
+                    3. Edit Cues
+                </button>
+                <button data-tab="styleTab" class="studio-tab-btn py-2 px-3 rounded-lg text-xs font-semibold text-purple-200/70 hover:text-white transition">
+                    4. Style
+                </button>
+            </div>
+
+            <!-- TAB 1: LYRICS -->
+            <section id="lyricsSetupTab" class="studio-tab-panel bg-[#110d1a] border border-[#231c35] rounded-xl p-5 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-sm font-semibold text-white">Paste Lyrics</h2>
+                        <p class="text-xs text-purple-200/60 mt-0.5">Leave an empty line between stanzas to start a new screen block automatically.</p>
+                    </div>
+                    <button id="clearLyricsBtn" class="text-xs px-2.5 py-1 rounded-lg bg-[#09070f] hover:bg-[#1a1428] text-purple-200/70 hover:text-white border border-[#231c35] transition">
+                        Clear
+                    </button>
+                </div>
+
+                <textarea id="rawLyricsInput" rows="11" placeholder="Paste lyrics here..." class="w-full rounded-lg bg-[#09070f] border border-[#231c35] p-3.5 text-sm text-white placeholder-purple-300/30 focus:outline-none focus:border-[#a855f7] font-mono-code leading-relaxed"></textarea>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button id="splitWordByWordBtn" class="py-2.5 px-4 rounded-lg bg-[#a855f7] hover:bg-[#9333ea] text-white font-semibold text-xs transition">
+                        Split by Word
+                    </button>
+                    <button id="splitLineByLineBtn" class="py-2.5 px-4 rounded-lg bg-[#1a1428] hover:bg-[#251c38] text-white font-semibold text-xs border border-[#231c35] transition">
+                        Split by Line
+                    </button>
+                </div>
+            </section>
+
+            <!-- TAB 2: TAP SYNC -->
+            <section id="liveSyncTab" class="studio-tab-panel hidden bg-[#110d1a] border border-[#231c35] rounded-xl p-5 space-y-4">
+                <!-- Top Sync Bar -->
+                <div class="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-[#09070f] border border-[#231c35]">
+                    <div class="flex items-center gap-3">
+                        <button id="startTapSyncBtn" class="py-2 px-3.5 rounded-lg bg-[#a855f7] hover:bg-[#9333ea] text-white font-semibold text-xs transition">
+                            Start Audio &amp; Sync
+                        </button>
+                        <span id="syncProgressFraction" class="text-xs font-mono-code text-purple-300">0 / 0</span>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="flex items-center gap-2 bg-[#110d1a] px-2.5 py-1 rounded border border-[#231c35]">
+                            <span class="text-[11px] text-purple-200/70">Latency</span>
+                            <input type="range" id="latencyOffsetSlider" min="-200" max="50" step="10" value="-60" class="w-16">
+                            <span id="latencyOffsetLabel" class="text-[11px] font-mono-code text-purple-300 w-11 text-right">-60ms</span>
+                        </div>
+                        <button id="autoDistributeBtn" class="text-xs px-2.5 py-1 rounded bg-[#110d1a] hover:bg-[#1a1428] text-purple-200 border border-[#231c35] transition">
+                            Auto-Distribute
+                        </button>
+                        <button id="resetPointerToZeroBtn" class="text-xs px-2.5 py-1 rounded bg-[#110d1a] hover:bg-[#1a1428] text-purple-200 border border-[#231c35] transition">
+                            Restart
+                        </button>
+                        <button id="clearAllTimestampsBtn" class="text-xs px-2.5 py-1 rounded bg-[#110d1a] hover:bg-red-950/40 text-purple-200/70 hover:text-red-300 border border-[#231c35] transition">
+                            Clear Times
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Minimal Teleprompter -->
+                <div class="rounded-lg bg-[#09070f] border border-[#231c35] p-5 space-y-4">
+                    <div class="flex items-center justify-between text-xs text-purple-300/60 border-b border-[#231c35] pb-2">
+                        <div class="flex items-center gap-2 truncate">
+                            <span>Previous:</span>
+                            <span id="hudPrevToken" class="font-mono-code text-purple-200 truncate">-</span>
+                        </div>
+                        <span id="hudPrevTime" class="font-mono-code text-purple-300">-</span>
+                    </div>
+
+                    <div class="py-4 text-center space-y-1.5">
+                        <div class="flex items-center justify-center gap-2">
+                            <span id="hudNextIndexBadge" class="text-[11px] font-mono-code uppercase text-purple-400">NEXT WORD</span>
+                            <span id="hudNextScreenFlag" class="hidden px-1.5 py-0.5 rounded bg-white text-black text-[10px] font-bold">NEW SCREEN</span>
+                        </div>
+                        <div id="hudNextTokenText" class="text-3xl sm:text-4xl font-bold text-white break-words py-1 select-none font-brat">
+                            No lyrics loaded
+                        </div>
+                        <div id="hudCurrentWallPreview" class="text-xs text-purple-300/50 font-mono-code max-w-md mx-auto truncate"></div>
+                    </div>
+
+                    <div class="pt-2 border-t border-[#231c35]">
+                        <div id="hudUpcomingQueue" class="flex items-center gap-1.5 overflow-x-auto py-1 min-h-[32px]">
+                            <span class="text-xs text-purple-300/40">Split lyrics in Tab 1 to populate queue</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tap Action Buttons -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <button id="tapSpaceBtn" class="py-3 px-3 rounded-lg bg-[#a855f7] hover:bg-[#9333ea] text-white font-semibold text-xs transition text-center">
+                        Stamp Word [Space]
+                    </button>
+                    <button id="tapEnterNewScreenBtn" class="py-3 px-3 rounded-lg bg-white hover:bg-purple-100 text-black font-semibold text-xs transition text-center">
+                        New Screen [Enter]
+                    </button>
+                    <button id="tapUndoBtn" class="py-3 px-3 rounded-lg bg-[#09070f] hover:bg-[#1a1428] text-purple-200 font-medium text-xs border border-[#231c35] transition text-center">
+                        Undo [Z]
+                    </button>
+                    <button id="tapBlankBeatBtn" class="py-3 px-3 rounded-lg bg-[#09070f] hover:bg-[#1a1428] text-purple-200 font-medium text-xs border border-[#231c35] transition text-center">
+                        Blank [B]
+                    </button>
+                </div>
+            </section>
+
+            <!-- TAB 3: EDIT CUES -->
+            <section id="cueListTab" class="studio-tab-panel hidden bg-[#110d1a] border border-[#231c35] rounded-xl p-5 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <h2 class="text-sm font-semibold text-white">Cue List</h2>
+                    <div class="flex items-center gap-1.5">
+                        <button id="addManualCueBtn" class="text-xs px-2.5 py-1 rounded bg-[#a855f7]/20 hover:bg-[#a855f7]/30 text-purple-200 font-medium border border-[#a855f7]/40 transition">Add Cue</button>
+                        <button id="shiftAllMinusBtn" class="px-2.5 py-1 rounded bg-[#09070f] hover:bg-[#1a1428] text-purple-200 text-xs font-mono-code border border-[#231c35]">-0.05s All</button>
+                        <button id="shiftAllPlusBtn" class="px-2.5 py-1 rounded bg-[#09070f] hover:bg-[#1a1428] text-purple-200 text-xs font-mono-code border border-[#231c35]">+0.05s All</button>
+                    </div>
+                </div>
+
+                <div id="cueListContainer" class="space-y-1.5 max-h-[460px] overflow-y-auto pr-1"></div>
+            </section>
+
+            <!-- TAB 4: STYLE -->
+            <section id="styleTab" class="studio-tab-panel hidden bg-[#110d1a] border border-[#231c35] rounded-xl p-5 space-y-5">
+                <!-- Color Presets -->
+                <div class="space-y-2.5">
+                    <span class="text-xs font-semibold text-purple-200/80 block">Color Presets</span>
+                    <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                        <button data-bg="#FFFFFF" data-fg="#000000" class="theme-swatch py-2 px-2 rounded-lg border border-[#a855f7] bg-[#09070f] text-xs text-purple-100 font-medium transition">
+                            White
+                        </button>
+                        <button data-bg="#A855F7" data-fg="#000000" class="theme-swatch py-2 px-2 rounded-lg border border-[#231c35] bg-[#09070f] text-xs text-purple-100 font-medium transition">
+                            Purple
+                        </button>
+                        <button data-bg="#8ACF00" data-fg="#000000" class="theme-swatch py-2 px-2 rounded-lg border border-[#231c35] bg-[#09070f] text-xs text-purple-100 font-medium transition">
+                            Green
+                        </button>
+                        <button data-bg="#0b0714" data-fg="#c084fc" class="theme-swatch py-2 px-2 rounded-lg border border-[#231c35] bg-[#09070f] text-xs text-purple-100 font-medium transition">
+                            Violet Dark
+                        </button>
+                        <button data-bg="#000000" data-fg="#FFFFFF" class="theme-swatch py-2 px-2 rounded-lg border border-[#231c35] bg-[#09070f] text-xs text-purple-100 font-medium transition">
+                            Black
+                        </button>
+                        <button data-bg="#FF66CC" data-fg="#000000" class="theme-swatch py-2 px-2 rounded-lg border border-[#231c35] bg-[#09070f] text-xs text-purple-100 font-medium transition">
+                            Pink
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-1">
+                        <div class="flex items-center justify-between p-2 rounded-lg bg-[#09070f] border border-[#231c35]">
+                            <span class="text-xs text-purple-200/80">Background</span>
+                            <div class="flex items-center gap-2">
+                                <span id="bgColorHex" class="text-xs font-mono-code text-purple-300/60">#FFFFFF</span>
+                                <input type="color" id="bgColorPicker" value="#FFFFFF" class="w-5 h-5 rounded cursor-pointer bg-transparent border-0">
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-2 rounded-lg bg-[#09070f] border border-[#231c35]">
+                            <span class="text-xs text-purple-200/80">Text</span>
+                            <div class="flex items-center gap-2">
+                                <span id="fgColorHex" class="text-xs font-mono-code text-purple-300/60">#000000</span>
+                                <input type="color" id="fgColorPicker" value="#000000" class="w-5 h-5 rounded cursor-pointer bg-transparent border-0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alignment & Style Toggles -->
+                <div class="space-y-2.5 pt-3 border-t border-[#231c35]">
+                    <span class="text-xs font-semibold text-purple-200/80 block">Alignment &amp; Options</span>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button data-align="brat-distributed" class="align-btn py-2 px-3 rounded-lg text-xs font-medium border border-[#a855f7] bg-[#1a1428] text-white transition">
+                            Distributed
+                        </button>
+                        <button data-align="left" class="align-btn py-2 px-3 rounded-lg text-xs font-medium border border-[#231c35] bg-[#09070f] text-purple-200/70 hover:text-white transition">
+                            Left
+                        </button>
+                        <button data-align="center" class="align-btn py-2 px-3 rounded-lg text-xs font-medium border border-[#231c35] bg-[#09070f] text-purple-200/70 hover:text-white transition">
+                            Center
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
+                        <label class="flex items-center justify-between p-2 rounded-lg bg-[#09070f] border border-[#231c35] cursor-pointer text-xs text-purple-100">
+                            <span>Auto-Fit Size</span>
+                            <input type="checkbox" id="autoFitToggle" checked class="accent-[#a855f7]">
+                        </label>
+                        <label class="flex items-center justify-between p-2 rounded-lg bg-[#09070f] border border-[#231c35] cursor-pointer text-xs text-purple-100">
+                            <span>Lowercase</span>
+                            <input type="checkbox" id="forceLowercase" checked class="accent-[#a855f7]">
+                        </label>
+                        <label class="flex items-center justify-between p-2 rounded-lg bg-[#09070f] border border-[#231c35] cursor-pointer text-xs text-purple-100">
+                            <span>Bold Text</span>
+                            <input type="checkbox" id="boldToggle" class="accent-[#a855f7]">
+                        </label>
+                        <label class="flex items-center justify-between p-2 rounded-lg bg-[#09070f] border border-[#231c35] cursor-pointer text-xs text-purple-100">
+                            <span>Mirror X</span>
+                            <input type="checkbox" id="mirrorXToggle" class="accent-[#a855f7]">
+                        </label>
+                        <label class="flex items-center justify-between p-2 rounded-lg bg-[#09070f] border border-[#231c35] cursor-pointer text-xs text-purple-100">
+                            <span>Bass Pulse</span>
+                            <input type="checkbox" id="audioReactiveToggle" checked class="accent-[#a855f7]">
+                        </label>
+                        <label class="flex items-center justify-between p-2 rounded-lg bg-[#09070f] border border-[#231c35] cursor-pointer text-xs text-purple-100">
+                            <span>Flash on Word</span>
+                            <input type="checkbox" id="beatFlashToggle" class="accent-[#a855f7]">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Sliders -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-[#231c35]">
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-purple-200/80">Font Size</span>
+                            <span id="fontSizeVal" class="font-mono-code text-purple-300/60">Auto</span>
+                        </div>
+                        <input type="range" id="fontSizeSlider" min="42" max="280" value="130" class="w-full">
+                    </div>
+
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-purple-200/80">Condense Width</span>
+                            <span id="condenseVal" class="font-mono-code text-purple-300/60">76%</span>
+                        </div>
+                        <input type="range" id="condenseSlider" min="50" max="105" value="76" class="w-full">
+                    </div>
+
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-purple-200/80">Line Height</span>
+                            <span id="lineHeightVal" class="font-mono-code text-purple-300/60">1.08</span>
+                        </div>
+                        <input type="range" id="lineHeightSlider" min="80" max="145" value="108" class="w-full">
+                    </div>
+
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-purple-200/80">Padding</span>
+                            <span id="paddingVal" class="font-mono-code text-purple-300/60">54px</span>
+                        </div>
+                        <input type="range" id="paddingSlider" min="16" max="180" value="54" class="w-full">
+                    </div>
+
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-purple-200/80">Blur</span>
+                            <span id="blurVal" class="font-mono-code text-purple-300/60">1.3px</span>
+                        </div>
+                        <input type="range" id="blurSlider" min="0" max="55" value="13" class="w-full">
+                    </div>
+
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-purple-200/80">JPEG Crunch</span>
+                            <span id="crunchVal" class="font-mono-code text-purple-300/60">24%</span>
+                        </div>
+                        <input type="range" id="crunchSlider" min="0" max="75" value="24" class="w-full">
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Video Export Modal -->
+    <div id="exportModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-[#110d1a] border border-[#231c35] rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between">
+                <h3 class="font-semibold text-sm text-white">Rendering Video</h3>
+                <span id="exportPercentLabel" class="font-mono-code text-xs font-bold text-purple-300">0%</span>
+            </div>
+            <p class="text-xs text-purple-200/60 leading-relaxed">
+                Recording canvas graphics with your audio track. Wait for completion or click Save Now to finish early.
+            </p>
+            <div class="w-full h-2 bg-[#09070f] rounded-full overflow-hidden border border-[#231c35]">
+                <div id="exportProgressBar" class="h-full bg-[#a855f7] w-0 transition-all duration-150"></div>
+            </div>
+            <div class="flex items-center justify-end gap-2 pt-2">
+                <button id="cancelExportBtn" class="px-3 py-1.5 rounded-lg bg-[#09070f] hover:bg-[#1a1428] text-purple-200 text-xs border border-[#231c35] transition">Cancel</button>
+                <button id="stopAndSaveExportBtn" class="px-3.5 py-1.5 rounded-lg bg-[#a855f7] hover:bg-[#9333ea] text-white text-xs font-semibold transition">Save Now</button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="audioPlayer" crossorigin="anonymous" loop></audio>
+
+    <script>
+        const STORAGE_KEY = 'brat_lyric_studio_minimal_purple_v4';
+        let cues = [];
+        let syncPointerIndex = 0;
+        let currentAlign = 'brat-distributed';
+        let currentAspectRatio = '1:1';
+        let hasAudioLoaded = false;
+        let waveformPeaks = [];
+        let lastActiveCueIdx = -1;
+        let flashTriggerUntil = 0;
+
+        const canvas = document.getElementById('bratCanvas');
+        const ctx = canvas.getContext('2d');
+        const offCanvas = document.createElement('canvas');
+        const offCtx = offCanvas.getContext('2d');
+
+        const audioPlayer = document.getElementById('audioPlayer');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const playBtnText = document.getElementById('playBtnText');
+        const restartAudioBtn = document.getElementById('restartAudioBtn');
+        const back2SecBtn = document.getElementById('back2SecBtn');
+        const audioSeekSlider = document.getElementById('audioSeekSlider');
+        const currentTimeLabel = document.getElementById('currentTimeLabel');
+        const durationTimeLabel = document.getElementById('durationTimeLabel');
+        const waveformCanvas = document.getElementById('waveformCanvas');
+        const waveCtx = waveformCanvas.getContext('2d');
+
+        const bgColorPicker = document.getElementById('bgColorPicker');
+        const fgColorPicker = document.getElementById('fgColorPicker');
+        const bgColorHex = document.getElementById('bgColorHex');
+        const fgColorHex = document.getElementById('fgColorHex');
+        const beatFlashToggle = document.getElementById('beatFlashToggle');
+        const audioReactiveToggle = document.getElementById('audioReactiveToggle');
+        const autoFitToggle = document.getElementById('autoFitToggle');
+        const forceLowercase = document.getElementById('forceLowercase');
+        const boldToggle = document.getElementById('boldToggle');
+        const mirrorXToggle = document.getElementById('mirrorXToggle');
+
+        const fontSizeSlider = document.getElementById('fontSizeSlider');
+        const condenseSlider = document.getElementById('condenseSlider');
+        const lineHeightSlider = document.getElementById('lineHeightSlider');
+        const paddingSlider = document.getElementById('paddingSlider');
+        const blurSlider = document.getElementById('blurSlider');
+        const crunchSlider = document.getElementById('crunchSlider');
+        const animModeSelect = document.getElementById('animModeSelect');
+        const latencyOffsetSlider = document.getElementById('latencyOffsetSlider');
+        const latencyOffsetLabel = document.getElementById('latencyOffsetLabel');
+
+        let toastTimer = null;
+        function showToast(msg) {
+            const banner = document.getElementById('toastBanner');
+            document.getElementById('toastMessage').textContent = msg;
+            banner.classList.remove('hidden');
+            banner.classList.add('flex');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                banner.classList.add('hidden');
+                banner.classList.remove('flex');
+            }, 2400);
+        }
+
+        function formatTimePrecise(sec) {
+            if (sec === null || sec === undefined || !isFinite(sec) || sec < 0) return '-';
+            const m = Math.floor(sec / 60);
+            const s = (sec % 60).toFixed(2).padStart(5, '0');
+            return `${String(m).padStart(2, '0')}:${s}`;
+        }
+
+        function formatLrcTimestamp(sec) {
+            if (sec === null || sec === undefined || !isFinite(sec) || sec < 0) sec = 0;
+            const m = Math.floor(sec / 60);
+            const s = (sec % 60).toFixed(2).padStart(5, '0');
+            return `[${String(m).padStart(2, '0')}:${s}]`;
+        }
+
+        function saveProjectToLocalStorage() {
+            try {
+                const payload = {
+                    cues,
+                    syncPointerIndex,
+                    rawLyrics: document.getElementById('rawLyricsInput').value,
+                    bg: bgColorPicker.value,
+                    fg: fgColorPicker.value,
+                    currentAlign,
+                    animMode: animModeSelect.value
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+            } catch (e) {}
+        }
+
+        function loadProjectFromLocalStorage() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return;
+                const data = JSON.parse(raw);
+                if (Array.isArray(data.cues) && data.cues.length > 0) {
+                    cues = data.cues;
+                    syncPointerIndex = Math.min(data.syncPointerIndex || 0, cues.length);
+                    if (data.rawLyrics) document.getElementById('rawLyricsInput').value = data.rawLyrics;
+                    if (data.bg) bgColorPicker.value = data.bg;
+                    if (data.fg) fgColorPicker.value = data.fg;
+                    if (data.currentAlign) currentAlign = data.currentAlign;
+                    if (data.animMode) animModeSelect.value = data.animMode;
+                }
+            } catch (e) {}
+        }
+
+        document.getElementById('resetProjectBtn').addEventListener('click', () => {
+            cues = [];
+            syncPointerIndex = 0;
+            document.getElementById('rawLyricsInput').value = '';
+            localStorage.removeItem(STORAGE_KEY);
+            refreshAllSyncViews();
+            switchToTab('lyricsSetupTab');
+            showToast('Project reset');
+        });
+
+        /* Web Audio Graph */
+        let audioCtx = null;
+        let mediaSourceNode = null;
+        let analyserNode = null;
+        let recordDestNode = null;
+        let freqDataArray = null;
+
+        function ensureAudioGraph() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContextClass();
+                mediaSourceNode = audioCtx.createMediaElementSource(audioPlayer);
+                analyserNode = audioCtx.createAnalyser();
+                analyserNode.fftSize = 256;
+                analyserNode.smoothingTimeConstant = 0.72;
+                freqDataArray = new Uint8Array(analyserNode.frequencyBinCount);
+
+                recordDestNode = audioCtx.createMediaStreamDestination();
+                mediaSourceNode.connect(analyserNode);
+                analyserNode.connect(audioCtx.destination);
+                analyserNode.connect(recordDestNode);
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function getBassEnergy() {
+            if (!analyserNode || !freqDataArray || audioPlayer.paused) return 0;
+            analyserNode.getByteFrequencyData(freqDataArray);
+            let sum = 0;
+            const bins = 8;
+            for (let i = 0; i < bins; i++) {
+                sum += freqDataArray[i];
+            }
+            return sum / (bins * 255);
+        }
+
+        async function loadUserAudioFile(file) {
+            if (!file) return;
+            const url = URL.createObjectURL(file);
+            audioPlayer.src = url;
+            audioPlayer.load();
+            hasAudioLoaded = true;
+
+            document.getElementById('audioTrackName').textContent = file.name;
+            playPauseBtn.disabled = false;
+            restartAudioBtn.disabled = false;
+            back2SecBtn.disabled = false;
+            audioSeekSlider.disabled = false;
+
+            showToast(`Loaded audio: ${file.name}`);
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const OfflineCtx = window.AudioContext || window.webkitAudioContext;
+                const tempCtx = new OfflineCtx();
+                const audioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
+                const rawData = audioBuffer.getChannelData(0);
+                const samples = 140;
+                const blockSize = Math.floor(rawData.length / samples);
+                const peaks = [];
+                for (let i = 0; i < samples; i++) {
+                    let sum = 0;
+                    const start = i * blockSize;
+                    for (let j = 0; j < blockSize; j += 10) {
+                        const val = Math.abs(rawData[start + j] || 0);
+                        if (val > sum) sum = val;
+                    }
+                    peaks.push(Math.max(0.08, Math.min(1, sum)));
+                }
+                waveformPeaks = peaks;
+                tempCtx.close();
+            } catch (err) {
+                waveformPeaks = Array.from({ length: 140 }, (_, i) => 0.25 + 0.5 * Math.abs(Math.sin(i * 0.25)));
+            }
+        }
+
+        document.getElementById('audioUploadInput').addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                loadUserAudioFile(e.target.files[0]);
+            }
+        });
+
+        const audioDropzone = document.getElementById('audioDropzone');
+        audioDropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            audioDropzone.classList.add('dropzone-active');
+        });
+        audioDropzone.addEventListener('dragleave', () => {
+            audioDropzone.classList.remove('dropzone-active');
+        });
+        audioDropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            audioDropzone.classList.remove('dropzone-active');
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                loadUserAudioFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        /* Interactive Waveform Scrubber & Pin Dragging */
+        const waveformClickArea = document.getElementById('waveformClickArea');
+        const waveformHoverLabel = document.getElementById('waveformHoverLabel');
+        let draggingCueIdx = -1;
+        let isScrubbingWaveform = false;
+        let hoveredCueIdx = -1;
+
+        function getWaveformTimeFromEvent(e) {
+            const rect = waveformClickArea.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+            const dur = (hasAudioLoaded && isFinite(audioPlayer.duration) && audioPlayer.duration > 0) ? audioPlayer.duration : 12;
+            return { ratio, time: ratio * dur, xPx: (clientX - rect.left) * (waveformCanvas.width / rect.width) };
+        }
+
+        function findCuePinNearX(canvasX) {
+            if (!hasAudioLoaded || !isFinite(audioPlayer.duration) || audioPlayer.duration <= 0) return -1;
+            const dur = audioPlayer.duration;
+            const w = waveformCanvas.width;
+            let bestIdx = -1;
+            let minDist = 10;
+            for (let i = 0; i < cues.length; i++) {
+                if (cues[i].start !== null) {
+                    const cx = (cues[i].start / dur) * w;
+                    const d = Math.abs(cx - canvasX);
+                    if (d < minDist) {
+                        minDist = d;
+                        bestIdx = i;
+                    }
+                }
+            }
+            return bestIdx;
+        }
+
+        waveformClickArea.addEventListener('mousedown', (e) => {
+            if (!hasAudioLoaded) return;
+            const info = getWaveformTimeFromEvent(e);
+            const nearPin = findCuePinNearX(info.xPx);
+            if (nearPin !== -1) {
+                draggingCueIdx = nearPin;
+            } else {
+                isScrubbingWaveform = true;
+                audioPlayer.currentTime = info.time;
+                currentTimeLabel.textContent = formatTimePrecise(audioPlayer.currentTime);
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!hasAudioLoaded) return;
+            if (draggingCueIdx !== -1 && cues[draggingCueIdx]) {
+                const info = getWaveformTimeFromEvent(e);
+                cues[draggingCueIdx].start = parseFloat(info.time.toFixed(2));
+                waveformHoverLabel.textContent = `#${draggingCueIdx + 1} "${cues[draggingCueIdx].text}" ${cues[draggingCueIdx].start.toFixed(2)}s`;
+                refreshAllSyncViews();
+                return;
+            }
+            if (isScrubbingWaveform) {
+                const info = getWaveformTimeFromEvent(e);
+                audioPlayer.currentTime = info.time;
+                currentTimeLabel.textContent = formatTimePrecise(audioPlayer.currentTime);
+            }
+        });
+
+        waveformClickArea.addEventListener('mousemove', (e) => {
+            if (draggingCueIdx !== -1 || isScrubbingWaveform) return;
+            const info = getWaveformTimeFromEvent(e);
+            hoveredCueIdx = findCuePinNearX(info.xPx);
+            if (hoveredCueIdx !== -1 && cues[hoveredCueIdx]) {
+                const c = cues[hoveredCueIdx];
+                waveformHoverLabel.textContent = `#${hoveredCueIdx + 1} "${c.text}" (${c.start.toFixed(2)}s)`;
+            } else {
+                waveformHoverLabel.textContent = hasAudioLoaded ? `${info.time.toFixed(2)}s` : '';
+            }
+        });
+
+        waveformClickArea.addEventListener('mouseleave', () => {
+            if (draggingCueIdx === -1) {
+                hoveredCueIdx = -1;
+                waveformHoverLabel.textContent = '';
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            draggingCueIdx = -1;
+            isScrubbingWaveform = false;
+        });
+
+        function drawWaveformAndCues() {
+            const w = waveformCanvas.width;
+            const h = waveformCanvas.height;
+            waveCtx.clearRect(0, 0, w, h);
+
+            const dur = (hasAudioLoaded && isFinite(audioPlayer.duration) && audioPlayer.duration > 0) ? audioPlayer.duration : 0;
+            const cur = audioPlayer.currentTime || 0;
+            const progressRatio = dur > 0 ? (cur / dur) : 0;
+
+            if (waveformPeaks.length === 0) {
+                waveCtx.fillStyle = '#231c35';
+                waveCtx.fillRect(0, h / 2 - 1, w, 2);
+                return;
+            }
+
+            const barCount = waveformPeaks.length;
+            const step = w / barCount;
+            const barW = Math.max(2, step - 1.4);
+
+            for (let i = 0; i < barCount; i++) {
+                const barRatio = i / barCount;
+                const peak = waveformPeaks[i];
+                const barH = Math.max(4, peak * (h - 16));
+                const x = i * step;
+                const y = 10 + (h - 12 - barH) / 2;
+
+                waveCtx.fillStyle = barRatio <= progressRatio ? '#a855f7' : '#261e38';
+                waveCtx.fillRect(x, y, barW, barH);
+            }
+
+            if (dur > 0) {
+                for (let i = 0; i < cues.length; i++) {
+                    if (cues[i].start !== null) {
+                        const cx = (cues[i].start / dur) * w;
+                        const isHoveredOrDragged = (i === hoveredCueIdx || i === draggingCueIdx);
+                        const pinColor = isHoveredOrDragged ? '#e879f9' : (cues[i].newBlock ? '#FFFFFF' : '#c084fc');
+
+                        waveCtx.fillStyle = pinColor;
+                        waveCtx.fillRect(cx - 0.75, 6, 1.5, h - 6);
+
+                        waveCtx.beginPath();
+                        waveCtx.arc(cx, 5, isHoveredOrDragged ? 4.5 : 3, 0, Math.PI * 2);
+                        waveCtx.fill();
+                    }
+                }
+
+                const playX = progressRatio * w;
+                waveCtx.fillStyle = '#ffffff';
+                waveCtx.fillRect(playX - 1, 0, 2, h);
+            }
+        }
+
+        /* Transport Controls */
+        function updatePlayButtonUI() {
+            playBtnText.textContent = audioPlayer.paused ? 'Play' : 'Pause';
+        }
+
+        playPauseBtn.addEventListener('click', () => {
+            if (!hasAudioLoaded) {
+                showToast('Upload an audio file first');
+                return;
+            }
+            ensureAudioGraph();
+            if (audioPlayer.paused) {
+                audioPlayer.play();
+            } else {
+                audioPlayer.pause();
+            }
+            updatePlayButtonUI();
+        });
+
+        restartAudioBtn.addEventListener('click', () => {
+            if (!hasAudioLoaded) return;
+            audioPlayer.currentTime = 0;
+            currentTimeLabel.textContent = formatTimePrecise(0);
+        });
+
+        back2SecBtn.addEventListener('click', () => {
+            if (!hasAudioLoaded) return;
+            audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 2.0);
+            currentTimeLabel.textContent = formatTimePrecise(audioPlayer.currentTime);
+        });
+
+        document.getElementById('loopAudioToggle').addEventListener('change', (e) => {
+            audioPlayer.loop = e.target.checked;
+        });
+
+        audioPlayer.addEventListener('loadedmetadata', () => {
+            durationTimeLabel.textContent = formatTimePrecise(audioPlayer.duration);
+        });
+
+        audioPlayer.addEventListener('ended', () => {
+            updatePlayButtonUI();
+            if (isRecordingVideo) {
+                finishVideoRecording();
+            }
+        });
+
+        audioSeekSlider.addEventListener('input', () => {
+            if (hasAudioLoaded && isFinite(audioPlayer.duration) && audioPlayer.duration > 0) {
+                audioPlayer.currentTime = (parseFloat(audioSeekSlider.value) / 100) * audioPlayer.duration;
+                currentTimeLabel.textContent = formatTimePrecise(audioPlayer.currentTime);
+            }
+        });
+
+        document.querySelectorAll('.speed-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const spd = parseFloat(btn.getAttribute('data-speed'));
+                audioPlayer.playbackRate = spd;
+                document.querySelectorAll('.speed-btn').forEach(b => {
+                    b.className = 'speed-btn px-2 py-0.5 rounded text-[11px] font-mono-code text-purple-200/60 hover:text-white transition';
+                });
+                btn.className = 'speed-btn px-2 py-0.5 rounded text-[11px] font-mono-code bg-[#a855f7] text-white transition';
+            });
+        });
+
+        latencyOffsetSlider.addEventListener('input', () => {
+            const v = parseInt(latencyOffsetSlider.value, 10);
+            latencyOffsetLabel.textContent = `${v > 0 ? '+' : ''}${v}ms`;
+        });
+
+        /* Tabs & Lyrics Splitting */
+        const rawLyricsInput = document.getElementById('rawLyricsInput');
+
+        function switchToTab(tabId) {
+            document.querySelectorAll('.studio-tab-panel').forEach(p => p.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+
+            document.querySelectorAll('.studio-tab-btn').forEach(b => {
+                if (b.getAttribute('data-tab') === tabId) {
+                    b.className = 'studio-tab-btn py-2 px-3 rounded-lg text-xs font-semibold bg-[#a855f7] text-white transition flex items-center justify-center gap-1.5';
+                } else {
+                    b.className = 'studio-tab-btn py-2 px-3 rounded-lg text-xs font-semibold text-purple-200/70 hover:text-white transition flex items-center justify-center gap-1.5';
+                }
+            });
+        }
+
+        document.querySelectorAll('.studio-tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => switchToTab(btn.getAttribute('data-tab')));
+        });
+
+        document.getElementById('clearLyricsBtn').addEventListener('click', () => {
+            rawLyricsInput.value = '';
+            rawLyricsInput.focus();
+        });
+
+        function parseRawLyricsToTokens(wordByWord = true) {
+            const raw = rawLyricsInput.value.trim();
+            if (!raw) return [];
+            const tokens = [];
+
+            if (wordByWord) {
+                const paragraphs = raw.split(/\n\s*\n/);
+                paragraphs.forEach((para) => {
+                    const words = para.trim().split(/\s+/).filter(Boolean);
+                    words.forEach((word, wIdx) => {
+                        tokens.push({
+                            id: Date.now() + tokens.length,
+                            text: word,
+                            start: null,
+                            end: null,
+                            newBlock: wIdx === 0,
+                            invert: false,
+                            isBlank: false
+                        });
+                    });
+                });
+            } else {
+                const rawLines = raw.split('\n');
+                let nextIsNewScreen = true;
+                rawLines.forEach((line) => {
+                    const trimmed = line.trim();
+                    if (!trimmed) {
+                        nextIsNewScreen = true;
+                        return;
+                    }
+                    tokens.push({
+                        id: Date.now() + tokens.length,
+                        text: trimmed,
+                        start: null,
+                        end: null,
+                        newBlock: nextIsNewScreen,
+                        invert: false,
+                        isBlank: false
+                    });
+                    nextIsNewScreen = false;
+                });
+            }
+            return tokens;
+        }
+
+        document.getElementById('splitWordByWordBtn').addEventListener('click', () => {
+            const tokens = parseRawLyricsToTokens(true);
+            if (tokens.length === 0) {
+                showToast('Paste lyrics first');
+                rawLyricsInput.focus();
+                return;
+            }
+            cues = tokens;
+            syncPointerIndex = 0;
+            refreshAllSyncViews();
+            switchToTab('liveSyncTab');
+            showToast(`Split into ${tokens.length} words`);
+        });
+
+        document.getElementById('splitLineByLineBtn').addEventListener('click', () => {
+            const tokens = parseRawLyricsToTokens(false);
+            if (tokens.length === 0) {
+                showToast('Paste lyrics first');
+                rawLyricsInput.focus();
+                return;
+            }
+            cues = tokens;
+            syncPointerIndex = 0;
+            refreshAllSyncViews();
+            switchToTab('liveSyncTab');
+            showToast(`Split into ${tokens.length} lines`);
+        });
+
+        document.getElementById('autoDistributeBtn').addEventListener('click', () => {
+            if (cues.length === 0) {
+                const tokens = parseRawLyricsToTokens(true);
+                if (tokens.length === 0) {
+                    showToast('Paste lyrics in Tab 1 first');
+                    return;
+                }
+                cues = tokens;
+            }
+            const totalDur = (hasAudioLoaded && isFinite(audioPlayer.duration) && audioPlayer.duration > 1) ? audioPlayer.duration : 15.0;
+            const usableDur = Math.max(2, totalDur - 0.4);
+            const step = usableDur / cues.length;
+
+            cues.forEach((tok, idx) => {
+                tok.start = parseFloat((0.1 + idx * step).toFixed(2));
+                tok.end = parseFloat((0.1 + (idx + 1) * step).toFixed(2));
+            });
+
+            syncPointerIndex = cues.length;
+            refreshAllSyncViews();
+            showToast(`Distributed ${cues.length} cues across ${totalDur.toFixed(1)}s`);
+        });
+
+        /* Teleprompter & Live Tap Sync */
+        function updateTeleprompterHUD() {
+            const total = cues.length;
+            const syncedCount = cues.filter(c => c.start !== null).length;
+
+            document.getElementById('unonSyncedBadge').textContent = `${syncedCount}/${total}`;
+            document.getElementById('syncProgressFraction').textContent = `${syncedCount} / ${total}`;
+
+            const hudPrevToken = document.getElementById('hudPrevToken');
+            const hudPrevTime = document.getElementById('hudPrevTime');
+            const hudNextIndexBadge = document.getElementById('hudNextIndexBadge');
+            const hudNextScreenFlag = document.getElementById('hudNextScreenFlag');
+            const hudNextTokenText = document.getElementById('hudNextTokenText');
+            const hudCurrentWallPreview = document.getElementById('hudCurrentWallPreview');
+            const hudUpcomingQueue = document.getElementById('hudUpcomingQueue');
+
+            if (total === 0) {
+                hudPrevToken.textContent = '-';
+                hudPrevTime.textContent = '-';
+                hudNextIndexBadge.textContent = 'STANDBY';
+                hudNextScreenFlag.classList.add('hidden');
+                hudNextTokenText.textContent = 'No lyrics loaded';
+                hudNextTokenText.className = 'text-2xl font-semibold text-purple-300/40 py-2';
+                hudCurrentWallPreview.textContent = '';
+                hudUpcomingQueue.innerHTML = '<span class="text-xs text-purple-300/40">Split lyrics in Tab 1 to populate queue</span>';
+                return;
+            }
+
+            if (syncPointerIndex > 0 && cues[syncPointerIndex - 1]) {
+                const prev = cues[syncPointerIndex - 1];
+                hudPrevToken.textContent = prev.isBlank ? '[BLANK]' : prev.text;
+                hudPrevTime.textContent = formatTimePrecise(prev.start);
+            } else {
+                hudPrevToken.textContent = '-';
+                hudPrevTime.textContent = '-';
+            }
+
+            if (syncPointerIndex < total) {
+                const nextCue = cues[syncPointerIndex];
+                hudNextIndexBadge.textContent = `WORD ${syncPointerIndex + 1} OF ${total}`;
+                if (nextCue.newBlock || syncPointerIndex === 0) {
+                    hudNextScreenFlag.classList.remove('hidden');
+                } else {
+                    hudNextScreenFlag.classList.add('hidden');
+                }
+                hudNextTokenText.textContent = nextCue.text;
+                hudNextTokenText.className = 'text-3xl sm:text-4xl font-bold text-white break-words py-1 select-none font-brat';
+
+                let bStart = syncPointerIndex;
+                while (bStart > 0 && !cues[bStart].newBlock) bStart--;
+                const wallWords = [];
+                for (let k = bStart; k <= syncPointerIndex; k++) {
+                    if (cues[k]) wallWords.push(k === syncPointerIndex ? `[${cues[k].text}]` : cues[k].text);
+                }
+                hudCurrentWallPreview.textContent = wallWords.join(' ');
+            } else {
+                hudNextIndexBadge.textContent = 'COMPLETE';
+                hudNextScreenFlag.classList.add('hidden');
+                hudNextTokenText.textContent = 'All words synced';
+                hudNextTokenText.className = 'text-2xl sm:text-3xl font-bold text-purple-300 py-1 select-none';
+                hudCurrentWallPreview.textContent = '';
+            }
+
+            hudUpcomingQueue.innerHTML = '';
+            const startLook = Math.max(0, syncPointerIndex);
+            const endLook = Math.min(total, startLook + 18);
+
+            for (let i = startLook; i < endLook; i++) {
+                const pill = document.createElement('button');
+                const isCurrentNext = (i === syncPointerIndex);
+                pill.className = `px-2.5 py-1 rounded text-xs font-mono-code shrink-0 border transition ${
+                    isCurrentNext
+                        ? 'bg-[#a855f7] text-white font-semibold border-purple-300'
+                        : 'bg-[#110d1a] text-purple-200/70 border-[#231c35] hover:border-purple-500'
+                }`;
+                pill.textContent = cues[i].newBlock ? `[New] ${cues[i].text}` : cues[i].text;
+                pill.addEventListener('click', () => {
+                    syncPointerIndex = i;
+                    refreshAllSyncViews();
+                });
+                hudUpcomingQueue.appendChild(pill);
+            }
+        }
+
+        function stampNextToken(forceNewScreen = false) {
+            if (cues.length === 0) {
+                showToast('Add lyrics in Tab 1 first');
+                switchToTab('lyricsSetupTab');
+                return;
+            }
+
+            if (hasAudioLoaded && audioPlayer.paused) {
+                ensureAudioGraph();
+                audioPlayer.play();
+                updatePlayButtonUI();
+            }
+
+            if (syncPointerIndex >= cues.length) {
+                showToast('All cues stamped');
+                return;
+            }
+
+            const rawNow = hasAudioLoaded ? audioPlayer.currentTime : 0;
+            const latencySec = (parseInt(latencyOffsetSlider.value, 10) || 0) / 1000;
+            const compensatedTime = Math.max(0, rawNow + latencySec);
+
+            const currentCue = cues[syncPointerIndex];
+            currentCue.start = parseFloat(compensatedTime.toFixed(2));
+
+            if (forceNewScreen || syncPointerIndex === 0) {
+                currentCue.newBlock = true;
+            }
+
+            if (syncPointerIndex > 0 && cues[syncPointerIndex - 1].start !== null) {
+                cues[syncPointerIndex - 1].end = currentCue.start;
+            }
+
+            const trackDur = (hasAudioLoaded && isFinite(audioPlayer.duration)) ? audioPlayer.duration : 999;
+            currentCue.end = parseFloat(Math.min(trackDur, currentCue.start + 3.0).toFixed(2));
+
+            if (beatFlashToggle.checked) {
+                flashTriggerUntil = performance.now() + 95;
+            }
+
+            syncPointerIndex++;
+            refreshAllSyncViews();
+        }
+
+        function undoLastStamp() {
+            if (cues.length === 0 || syncPointerIndex <= 0) return;
+
+            syncPointerIndex--;
+            const undoneCue = cues[syncPointerIndex];
+            const prevTime = undoneCue.start || 0;
+            undoneCue.start = null;
+            undoneCue.end = null;
+
+            if (hasAudioLoaded) {
+                const targetTime = Math.max(0, prevTime - 1.5);
+                audioPlayer.currentTime = targetTime;
+                currentTimeLabel.textContent = formatTimePrecise(targetTime);
+            }
+
+            refreshAllSyncViews();
+        }
+
+        function insertBlankBeatNow() {
+            if (!hasAudioLoaded) return;
+            const now = parseFloat(audioPlayer.currentTime.toFixed(2));
+            if (syncPointerIndex > 0 && cues[syncPointerIndex - 1].start !== null) {
+                cues[syncPointerIndex - 1].end = now;
+            }
+            cues.splice(syncPointerIndex, 0, {
+                id: Date.now(),
+                text: '',
+                start: now,
+                end: now + 1.5,
+                newBlock: true,
+                invert: false,
+                isBlank: true
+            });
+            syncPointerIndex++;
+            refreshAllSyncViews();
+        }
+
+        document.getElementById('startTapSyncBtn').addEventListener('click', () => {
+            if (!hasAudioLoaded) {
+                showToast('Upload an audio file first');
+                return;
+            }
+            if (cues.length === 0) {
+                showToast('Split lyrics in Tab 1 first');
+                switchToTab('lyricsSetupTab');
+                return;
+            }
+            ensureAudioGraph();
+            if (audioPlayer.paused) {
+                audioPlayer.play();
+                updatePlayButtonUI();
+            }
+        });
+
+        document.getElementById('tapSpaceBtn').addEventListener('click', () => stampNextToken(false));
+        document.getElementById('tapEnterNewScreenBtn').addEventListener('click', () => stampNextToken(true));
+        document.getElementById('tapUndoBtn').addEventListener('click', undoLastStamp);
+        document.getElementById('tapBlankBeatBtn').addEventListener('click', insertBlankBeatNow);
+
+        document.getElementById('resetPointerToZeroBtn').addEventListener('click', () => {
+            syncPointerIndex = 0;
+            if (hasAudioLoaded) {
+                audioPlayer.currentTime = 0;
+                currentTimeLabel.textContent = formatTimePrecise(0);
+            }
+            refreshAllSyncViews();
+        });
+
+        document.getElementById('clearAllTimestampsBtn').addEventListener('click', () => {
+            cues.forEach(c => {
+                c.start = null;
+                c.end = null;
+            });
+            syncPointerIndex = 0;
+            refreshAllSyncViews();
+        });
+
+        window.addEventListener('keydown', (e) => {
+            const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+            if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+            if (e.code === 'Space') {
+                e.preventDefault();
+                stampNextToken(false);
+            } else if (e.code === 'Enter' || e.code === 'KeyC') {
+                e.preventDefault();
+                stampNextToken(true);
+            } else if (e.code === 'Backspace' || e.code === 'KeyZ') {
+                e.preventDefault();
+                undoLastStamp();
+            } else if (e.code === 'KeyB') {
+                e.preventDefault();
+                insertBlankBeatNow();
+            }
+        });
+
+        /* Edit Cues List */
+        const cueListContainer = document.getElementById('cueListContainer');
+
+        function renderCueListUI() {
+            cueListContainer.innerHTML = '';
+
+            if (cues.length === 0) {
+                cueListContainer.innerHTML = `
+                    <div class="p-8 text-center rounded-lg border border-[#231c35] text-purple-300/40 text-xs">
+                        No cues yet. Split your lyrics in Tab 1.
+                    </div>
+                `;
+                return;
+            }
+
+            cues.forEach((cue, index) => {
+                const isNextUp = (index === syncPointerIndex);
+                const isSynced = (cue.start !== null);
+
+                const row = document.createElement('div');
+                row.id = `cue-row-${index}`;
+                row.className = `grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-2 rounded-lg border transition ${
+                    isNextUp ? 'cue-next-up bg-[#161124]' : 'border-[#231c35] bg-[#09070f]'
+                }`;
+
+                row.innerHTML = `
+                    <div class="sm:col-span-1">
+                        <button data-act="arm-pointer" data-idx="${index}" class="text-[11px] font-mono-code px-2 py-1 rounded ${
+                            isNextUp ? 'bg-[#a855f7] text-white font-semibold' : isSynced ? 'text-purple-300' : 'text-purple-300/40'
+                        }">
+                            #${index + 1}
+                        </button>
+                    </div>
+
+                    <div class="sm:col-span-4 flex items-center gap-1">
+                        <button data-act="seek-cue" data-idx="${index}" class="px-2 py-1 rounded bg-[#110d1a] hover:bg-[#1a1428] text-purple-200 text-[11px] border border-[#231c35]">Seek</button>
+                        <input type="number" step="0.05" min="0" placeholder="-" value="${cue.start !== null ? cue.start.toFixed(2) : ''}" data-act="start-input" data-idx="${index}"
+                            class="w-20 bg-[#110d1a] border border-[#231c35] rounded px-2 py-1 text-xs font-mono-code text-white focus:outline-none focus:border-[#a855f7]">
+                        <button data-act="nudge-minus" data-idx="${index}" class="px-1.5 py-1 rounded bg-[#110d1a] hover:bg-[#1a1428] text-purple-300/70 border border-[#231c35] text-[10px] font-mono-code">-0.05</button>
+                        <button data-act="nudge-plus" data-idx="${index}" class="px-1.5 py-1 rounded bg-[#110d1a] hover:bg-[#1a1428] text-purple-300/70 border border-[#231c35] text-[10px] font-mono-code">+0.05</button>
+                    </div>
+
+                    <div class="sm:col-span-3">
+                        <input type="text" value="${cue.text.replace(/"/g, '&quot;')}" data-act="text-input" data-idx="${index}"
+                            placeholder="(blank)"
+                            class="w-full bg-[#110d1a] border border-[#231c35] rounded px-2.5 py-1 text-xs text-white focus:outline-none focus:border-[#a855f7]">
+                    </div>
+
+                    <div class="sm:col-span-4 flex items-center justify-end gap-1.5">
+                        <button data-act="toggle-newblock" data-idx="${index}"
+                            class="text-[11px] px-2 py-1 rounded border transition ${
+                                cue.newBlock ? 'bg-[#a855f7]/20 border-[#a855f7] text-purple-200' : 'bg-[#110d1a] border-[#231c35] text-purple-300/50 hover:text-purple-200'
+                            }">New Screen</button>
+                        <button data-act="toggle-invert" data-idx="${index}"
+                            class="text-[11px] px-2 py-1 rounded border transition ${
+                                cue.invert ? 'bg-white text-black border-white' : 'bg-[#110d1a] border-[#231c35] text-purple-300/50 hover:text-purple-200'
+                            }">Invert</button>
+                        <button data-act="delete-cue" data-idx="${index}"
+                            class="px-2 py-1 rounded bg-[#110d1a] hover:bg-red-950/50 text-purple-300/50 hover:text-red-300 border border-[#231c35] text-[11px] transition">Delete</button>
+                    </div>
+                `;
+                cueListContainer.appendChild(row);
+            });
+        }
+
+        function refreshAllSyncViews() {
+            updateTeleprompterHUD();
+            renderCueListUI();
+            saveProjectToLocalStorage();
+        }
+
+        cueListContainer.addEventListener('input', (e) => {
+            const idx = parseInt(e.target.getAttribute('data-idx'), 10);
+            const act = e.target.getAttribute('data-act');
+            if (isNaN(idx) || !cues[idx]) return;
+
+            if (act === 'start-input') {
+                const val = parseFloat(e.target.value);
+                cues[idx].start = isNaN(val) ? null : Math.max(0, val);
+                if (cues[idx].start !== null && idx > 0 && cues[idx - 1].start !== null) {
+                    cues[idx - 1].end = cues[idx].start;
+                }
+                updateTeleprompterHUD();
+                saveProjectToLocalStorage();
+            } else if (act === 'text-input') {
+                cues[idx].text = e.target.value;
+                updateTeleprompterHUD();
+                saveProjectToLocalStorage();
+            }
+        });
+
+        cueListContainer.addEventListener('click', (e) => {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            const idx = parseInt(btn.getAttribute('data-idx'), 10);
+            const act = btn.getAttribute('data-act');
+            if (isNaN(idx) || !cues[idx]) return;
+
+            if (act === 'arm-pointer') {
+                syncPointerIndex = idx;
+                refreshAllSyncViews();
+            } else if (act === 'seek-cue') {
+                if (cues[idx].start !== null && hasAudioLoaded) {
+                    audioPlayer.currentTime = cues[idx].start;
+                    currentTimeLabel.textContent = formatTimePrecise(audioPlayer.currentTime);
+                }
+            } else if (act === 'nudge-minus') {
+                if (cues[idx].start !== null) {
+                    cues[idx].start = parseFloat(Math.max(0, cues[idx].start - 0.05).toFixed(2));
+                    refreshAllSyncViews();
+                }
+            } else if (act === 'nudge-plus') {
+                if (cues[idx].start !== null) {
+                    cues[idx].start = parseFloat((cues[idx].start + 0.05).toFixed(2));
+                    refreshAllSyncViews();
+                }
+            } else if (act === 'toggle-newblock') {
+                cues[idx].newBlock = !cues[idx].newBlock;
+                refreshAllSyncViews();
+            } else if (act === 'toggle-invert') {
+                cues[idx].invert = !cues[idx].invert;
+                refreshAllSyncViews();
+            } else if (act === 'delete-cue') {
+                cues.splice(idx, 1);
+                if (syncPointerIndex >= cues.length) syncPointerIndex = Math.max(0, cues.length);
+                refreshAllSyncViews();
+            }
+        });
+
+        document.getElementById('addManualCueBtn').addEventListener('click', () => {
+            const now = hasAudioLoaded ? parseFloat(audioPlayer.currentTime.toFixed(2)) : null;
+            cues.push({
+                id: Date.now(),
+                text: 'word',
+                start: now,
+                end: now !== null ? now + 1.5 : null,
+                newBlock: cues.length === 0,
+                invert: false,
+                isBlank: false
+            });
+            refreshAllSyncViews();
+        });
+
+        function shiftAllSyncedCues(delta) {
+            cues.forEach(c => {
+                if (c.start !== null) {
+                    c.start = parseFloat(Math.max(0, c.start + delta).toFixed(2));
+                }
+                if (c.end !== null) {
+                    c.end = parseFloat(Math.max(0, c.end + delta).toFixed(2));
+                }
+            });
+            refreshAllSyncViews();
+        }
+
+        document.getElementById('shiftAllMinusBtn').addEventListener('click', () => shiftAllSyncedCues(-0.05));
+        document.getElementById('shiftAllPlusBtn').addEventListener('click', () => shiftAllSyncedCues(0.05));
+
+        /* Brat Canvas Rendering Engine */
+        function wrapTokensIntoLines(context, tokenObjs, maxWidth) {
+            const lines = [];
+            if (tokenObjs.length === 0) return lines;
+
+            let currentLine = [tokenObjs[0]];
+            for (let i = 1; i < tokenObjs.length; i++) {
+                const candidate = [...currentLine, tokenObjs[i]];
+                const testStr = candidate.map(t => t.text).join(' ');
+                if (context.measureText(testStr).width > maxWidth && currentLine.length > 0) {
+                    lines.push(currentLine);
+                    currentLine = [tokenObjs[i]];
+                } else {
+                    currentLine = candidate;
+                }
+            }
+            if (currentLine.length > 0) lines.push(currentLine);
+            return lines;
+        }
+
+        function getActiveScreenStateAtTime(t) {
+            if (cues.length === 0) {
+                return { activeIdx: -1, visibleTokens: [], fullBlockTokens: [], activeCue: null };
+            }
+
+            let activeIdx = -1;
+            for (let i = 0; i < cues.length; i++) {
+                if (cues[i].start !== null && t >= cues[i].start) {
+                    activeIdx = i;
+                }
+            }
+
+            if (activeIdx === -1) {
+                return { activeIdx: -1, visibleTokens: [], fullBlockTokens: [], activeCue: null };
+            }
+
+            const activeCue = cues[activeIdx];
+            if (activeCue.isBlank) {
+                return { activeIdx, visibleTokens: [], fullBlockTokens: [], activeCue };
+            }
+
+            let blockStartIdx = activeIdx;
+            while (blockStartIdx > 0 && !cues[blockStartIdx].newBlock) {
+                blockStartIdx--;
+            }
+            let blockEndIdx = activeIdx;
+            while (blockEndIdx + 1 < cues.length && !cues[blockEndIdx + 1].newBlock) {
+                blockEndIdx++;
+            }
+
+            const mode = animModeSelect.value;
+            const isLower = forceLowercase.checked;
+
+            const fullBlockTokens = [];
+            for (let i = blockStartIdx; i <= blockEndIdx; i++) {
+                if (cues[i] && cues[i].text.trim()) {
+                    fullBlockTokens.push({
+                        text: isLower ? cues[i].text.trim().toLowerCase() : cues[i].text.trim(),
+                        isCurrent: i === activeIdx,
+                        isRevealed: cues[i].start !== null && t >= cues[i].start
+                    });
+                }
+            }
+
+            let visibleTokens = [];
+            if (mode === 'flash' || mode === 'cover-center') {
+                visibleTokens = [{
+                    text: isLower ? activeCue.text.trim().toLowerCase() : activeCue.text.trim(),
+                    isCurrent: true,
+                    isRevealed: true
+                }];
+            } else if (mode === 'spotlight') {
+                visibleTokens = fullBlockTokens;
+            } else {
+                visibleTokens = fullBlockTokens.filter(tk => tk.isRevealed);
+            }
+
+            return { activeIdx, visibleTokens, fullBlockTokens, activeCue };
+        }
+
+        function renderBratVideoFrame() {
+            const W = canvas.width;
+            const H = canvas.height;
+            const nowTime = audioPlayer.currentTime || 0;
+            const bassEnergy = audioReactiveToggle.checked ? getBassEnergy() : 0;
+
+            const state = getActiveScreenStateAtTime(nowTime);
+
+            if (state.activeIdx !== lastActiveCueIdx) {
+                if (lastActiveCueIdx >= 0) {
+                    const oldRow = document.getElementById(`cue-row-${lastActiveCueIdx}`);
+                    if (oldRow) oldRow.classList.remove('cue-playing');
+                }
+                if (state.activeIdx >= 0) {
+                    const newRow = document.getElementById(`cue-row-${state.activeIdx}`);
+                    if (newRow) newRow.classList.add('cue-playing');
+                }
+                lastActiveCueIdx = state.activeIdx;
+                if (state.activeIdx >= 0 && beatFlashToggle.checked) {
+                    flashTriggerUntil = performance.now() + 90;
+                }
+            }
+
+            const badgeEl = document.getElementById('activeCueIndexBadge');
+            const previewEl = document.getElementById('activeCuePreviewText');
+            if (state.activeIdx >= 0) {
+                badgeEl.textContent = `CUE #${state.activeIdx + 1}`;
+                previewEl.textContent = state.visibleTokens.map(t => t.text).join(' ') || '(blank)';
+            } else {
+                badgeEl.textContent = cues.length > 0 ? 'READY' : 'STANDBY';
+                previewEl.textContent = cues.length > 0 ? 'Play audio or tap Spacebar to sync' : 'Upload audio and add lyrics';
+            }
+
+            let bg = bgColorPicker.value;
+            let fg = fgColorPicker.value;
+            const isStrobe = performance.now() < flashTriggerUntil;
+            if ((state.activeCue && state.activeCue.invert) || isStrobe) {
+                const tmp = bg;
+                bg = fg;
+                fg = tmp;
+            }
+
+            const isAutoFit = autoFitToggle.checked;
+            const isMirror = mirrorXToggle.checked;
+            const isBold = boldToggle.checked;
+
+            const condenseRatio = parseInt(condenseSlider.value, 10) / 100;
+            const lineHeightMult = parseInt(lineHeightSlider.value, 10) / 100;
+            const pad = parseInt(paddingSlider.value, 10);
+            const blurAmount = parseInt(blurSlider.value, 10) / 10;
+            const crunchPercent = parseInt(crunchSlider.value, 10);
+
+            document.getElementById('condenseVal').textContent = `${Math.round(condenseRatio * 100)}%`;
+            document.getElementById('lineHeightVal').textContent = lineHeightMult.toFixed(2);
+            document.getElementById('paddingVal').textContent = `${pad}px`;
+            document.getElementById('blurVal').textContent = `${blurAmount.toFixed(1)}px`;
+            document.getElementById('crunchVal').textContent = `${crunchPercent}%`;
+            bgColorHex.textContent = bgColorPicker.value.toUpperCase();
+            fgColorHex.textContent = fgColorPicker.value.toUpperCase();
+
+            const scaleFactor = 1 - (crunchPercent * 0.0094);
+            const offW = Math.max(180, Math.round(W * scaleFactor));
+            const offH = Math.max(180, Math.round(H * scaleFactor));
+            offCanvas.width = offW;
+            offCanvas.height = offH;
+
+            offCtx.save();
+            offCtx.fillStyle = bg;
+            offCtx.fillRect(0, 0, offW, offH);
+            offCtx.scale(offW / W, offH / H);
+
+            if (bassEnergy > 0.35) {
+                const bump = 1 + (bassEnergy - 0.35) * 0.055;
+                offCtx.translate(W / 2, H / 2);
+                offCtx.scale(bump, bump);
+                offCtx.translate(-W / 2, -H / 2);
+            }
+
+            if (isMirror) {
+                offCtx.translate(W, 0);
+                offCtx.scale(-1, 1);
+            }
+
+            const fontWeight = isBold ? '700' : '400';
+            const fontFamily = '"Arial Narrow", "PT Sans Narrow", Arial, sans-serif';
+            const availWidth = (W - pad * 2) / condenseRatio;
+            const availHeight = H - pad * 2;
+
+            let fontSize = parseInt(fontSizeSlider.value, 10);
+            const mode = animModeSelect.value;
+
+            const referenceTokens = (mode === 'cumulative' || mode === 'spotlight')
+                ? state.fullBlockTokens
+                : state.visibleTokens;
+
+            if (isAutoFit && referenceTokens.length > 0) {
+                let low = 34;
+                let high = mode === 'cover-center' ? 320 : 280;
+                let best = 120;
+                while (low <= high) {
+                    const mid = Math.floor((low + high) / 2);
+                    offCtx.font = `${fontWeight} ${mid}px ${fontFamily}`;
+                    const testLines = wrapTokensIntoLines(offCtx, referenceTokens, availWidth);
+                    let maxW = 0;
+                    for (const ln of testLines) {
+                        const str = ln.map(t => t.text).join(' ');
+                        const w = offCtx.measureText(str).width;
+                        if (w > maxW) maxW = w;
+                    }
+                    const totalH = testLines.length * (mid * lineHeightMult);
+                    if (maxW <= availWidth && totalH <= availHeight) {
+                        best = mid;
+                        low = mid + 1;
+                    } else {
+                        high = mid - 1;
+                    }
+                }
+                fontSize = best;
+                document.getElementById('fontSizeVal').textContent = `Auto (${fontSize}px)`;
+            } else {
+                document.getElementById('fontSizeVal').textContent = `${fontSize}px`;
+            }
+
+            if (state.visibleTokens.length > 0) {
+                offCtx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+                const wrappedLines = wrapTokensIntoLines(offCtx, state.visibleTokens, availWidth);
+
+                if (blurAmount > 0) {
+                    offCtx.filter = `blur(${(blurAmount * (offW / W)).toFixed(2)}px)`;
+                } else {
+                    offCtx.filter = 'none';
+                }
+
+                offCtx.textBaseline = 'top';
+                const lineStep = fontSize * lineHeightMult;
+                const totalBlockHeight = wrappedLines.length * lineStep;
+
+                let startY = pad;
+                if (currentAlign === 'center' || mode === 'cover-center') {
+                    startY = (H - totalBlockHeight) / 2;
+                }
+
+                offCtx.save();
+                offCtx.scale(condenseRatio, 1);
+
+                for (let i = 0; i < wrappedLines.length; i++) {
+                    const lineTokens = wrappedLines[i];
+                    const y = startY + i * lineStep;
+
+                    if (currentAlign === 'brat-distributed' && mode !== 'cover-center' && lineTokens.length > 1) {
+                        const totalWordsW = lineTokens.reduce((acc, tk) => acc + offCtx.measureText(tk.text).width, 0);
+                        const spaceW = Math.max(18, (availWidth - totalWordsW) / (lineTokens.length - 1));
+                        let curX = pad / condenseRatio;
+
+                        for (const tk of lineTokens) {
+                            const wordW = offCtx.measureText(tk.text).width;
+                            drawSingleToken(offCtx, tk, curX, y, fg, mode);
+                            curX += wordW + spaceW;
+                        }
+                    } else if (currentAlign === 'center' || mode === 'cover-center') {
+                        const fullLineStr = lineTokens.map(t => t.text).join(' ');
+                        const lw = offCtx.measureText(fullLineStr).width;
+                        let curX = (W / condenseRatio - lw) / 2;
+                        const spaceW = offCtx.measureText(' ').width;
+
+                        for (const tk of lineTokens) {
+                            const wordW = offCtx.measureText(tk.text).width;
+                            drawSingleToken(offCtx, tk, curX, y, fg, mode);
+                            curX += wordW + spaceW;
+                        }
+                    } else {
+                        let curX = pad / condenseRatio;
+                        const spaceW = offCtx.measureText(' ').width;
+                        for (const tk of lineTokens) {
+                            const wordW = offCtx.measureText(tk.text).width;
+                            drawSingleToken(offCtx, tk, curX, y, fg, mode);
+                            curX += wordW + spaceW;
+                        }
+                    }
+                }
+                offCtx.restore();
+            }
+
+            offCtx.restore();
+
+            ctx.save();
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, W, H);
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'medium';
+            ctx.drawImage(offCanvas, 0, 0, offW, offH, 0, 0, W, H);
+            ctx.restore();
+        }
+
+        function drawSingleToken(context, tk, x, y, fgColor, mode) {
+            context.save();
+            if (mode === 'spotlight') {
+                context.globalAlpha = tk.isCurrent ? 1.0 : (tk.isRevealed ? 0.38 : 0.14);
+            } else {
+                context.globalAlpha = 1.0;
+            }
+            context.fillStyle = fgColor;
+            context.fillText(tk.text, x, y);
+            context.restore();
+        }
+
+        /* Aspect Ratio & Style Controls */
+        const canvasFrame = document.getElementById('canvasFrame');
+        const canvasResolutionLabel = document.getElementById('canvasResolutionLabel');
+
+        document.querySelectorAll('.ratio-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentAspectRatio = btn.getAttribute('data-ratio');
+                document.querySelectorAll('.ratio-btn').forEach(b => {
+                    b.className = 'ratio-btn px-2.5 py-1 rounded text-xs font-medium text-purple-200/60 hover:text-white transition';
+                });
+                btn.className = 'ratio-btn px-2.5 py-1 rounded text-xs font-medium bg-[#a855f7] text-white transition';
+
+                if (currentAspectRatio === '1:1') {
+                    canvas.width = 1080;
+                    canvas.height = 1080;
+                    canvasFrame.className = 'aspect-square h-[310px] sm:h-[340px] max-w-full rounded overflow-hidden shadow-lg border border-white/10 relative bg-white transition-all duration-150';
+                    canvasResolutionLabel.textContent = '1080x1080';
+                } else if (currentAspectRatio === '9:16') {
+                    canvas.width = 1080;
+                    canvas.height = 1920;
+                    canvasFrame.className = 'aspect-[9/16] h-[330px] sm:h-[360px] max-w-full rounded overflow-hidden shadow-lg border border-white/10 relative bg-white transition-all duration-150';
+                    canvasResolutionLabel.textContent = '1080x1920';
+                } else if (currentAspectRatio === '16:9') {
+                    canvas.width = 1920;
+                    canvas.height = 1080;
+                    canvasFrame.className = 'aspect-video w-full max-w-[440px] rounded overflow-hidden shadow-lg border border-white/10 relative bg-white transition-all duration-150';
+                    canvasResolutionLabel.textContent = '1920x1080';
+                }
+            });
+        });
+
+        document.querySelectorAll('.theme-swatch').forEach(sw => {
+            sw.addEventListener('click', () => {
+                bgColorPicker.value = sw.getAttribute('data-bg');
+                fgColorPicker.value = sw.getAttribute('data-fg');
+                document.querySelectorAll('.theme-swatch').forEach(s => s.classList.replace('border-[#a855f7]', 'border-[#231c35]'));
+                sw.classList.replace('border-[#231c35]', 'border-[#a855f7]');
+                saveProjectToLocalStorage();
+            });
+        });
+
+        document.querySelectorAll('.align-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentAlign = btn.getAttribute('data-align');
+                document.querySelectorAll('.align-btn').forEach(b => {
+                    b.className = 'align-btn py-2 px-3 rounded-lg text-xs font-medium border border-[#231c35] bg-[#09070f] text-purple-200/70 hover:text-white transition';
+                });
+                btn.className = 'align-btn py-2 px-3 rounded-lg text-xs font-medium border border-[#a855f7] bg-[#1a1428] text-white transition';
+                saveProjectToLocalStorage();
+            });
+        });
+
+        fontSizeSlider.addEventListener('input', () => {
+            autoFitToggle.checked = false;
+        });
+
+        function cycleCanvasTheme() {
+            const cur = bgColorPicker.value.toUpperCase();
+            if (cur === '#FFFFFF') {
+                bgColorPicker.value = '#A855F7';
+                fgColorPicker.value = '#000000';
+            } else if (cur === '#A855F7') {
+                bgColorPicker.value = '#8ACF00';
+                fgColorPicker.value = '#000000';
+            } else {
+                bgColorPicker.value = '#FFFFFF';
+                fgColorPicker.value = '#000000';
+            }
+            saveProjectToLocalStorage();
+        }
+
+        canvas.addEventListener('click', cycleCanvasTheme);
+        document.getElementById('brandLogoBox').addEventListener('click', cycleCanvasTheme);
+
+        /* Export & Import Handlers */
+        document.getElementById('exportLrcBtn').addEventListener('click', () => {
+            const stamped = cues.filter(c => c.start !== null);
+            if (stamped.length === 0) {
+                showToast('No synced timestamps to export');
+                return;
+            }
+            const lrcContent = stamped.map(c => `${formatLrcTimestamp(c.start)} ${c.text}`).join('\n');
+            const blob = new Blob([lrcContent], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'brat-lyrics.lrc';
+            link.click();
+            showToast('Exported LRC file');
+        });
+
+        document.getElementById('exportJsonBtn').addEventListener('click', () => {
+            if (cues.length === 0) {
+                showToast('No cues to save');
+                return;
+            }
+            const data = JSON.stringify({
+                cues,
+                aspectRatio: currentAspectRatio,
+                bg: bgColorPicker.value,
+                fg: fgColorPicker.value,
+                currentAlign
+            }, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'brat-project.json';
+            link.click();
+            showToast('Saved JSON project');
+        });
+
+        document.getElementById('importTimingFileInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const text = await file.text();
+
+            if (file.name.endsWith('.json')) {
+                try {
+                    const obj = JSON.parse(text);
+                    if (Array.isArray(obj.cues)) {
+                        cues = obj.cues;
+                        syncPointerIndex = cues.findIndex(c => c.start === null);
+                        if (syncPointerIndex === -1) syncPointerIndex = cues.length;
+                        refreshAllSyncViews();
+                        switchToTab('cueListTab');
+                        showToast(`Loaded ${cues.length} cues`);
+                    }
+                } catch (err) {
+                    showToast('Invalid JSON file');
+                }
+            } else {
+                const lines = text.split('\n');
+                const parsed = [];
+                const lrcRegex = /\[(\d+):(\d+(?:\.\d+)?)\]\s*(.*)/;
+                lines.forEach(line => {
+                    const match = line.match(lrcRegex);
+                    if (match) {
+                        const start = parseInt(match[1], 10) * 60 + parseFloat(match[2]);
+                        parsed.push({
+                            id: Date.now() + parsed.length,
+                            text: match[3].trim(),
+                            start: parseFloat(start.toFixed(2)),
+                            end: parseFloat((start + 2.0).toFixed(2)),
+                            newBlock: parsed.length === 0,
+                            invert: false,
+                            isBlank: match[3].trim() === ''
+                        });
+                    }
+                });
+                if (parsed.length > 0) {
+                    for (let i = 0; i < parsed.length - 1; i++) {
+                        parsed[i].end = parsed[i + 1].start;
+                    }
+                    cues = parsed;
+                    syncPointerIndex = cues.length;
+                    refreshAllSyncViews();
+                    switchToTab('cueListTab');
+                    showToast(`Loaded ${parsed.length} cues from LRC`);
+                }
+            }
+        });
+
+        document.getElementById('snapshotPngBtn').addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = `brat-frame-${Math.round((audioPlayer.currentTime || 0) * 10)}s.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            showToast('Saved PNG frame');
+        });
+
+        /* Video Export */
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let isRecordingVideo = false;
+        let exportProgressInterval = null;
+        let previousLoopState = true;
+
+        const exportModal = document.getElementById('exportModal');
+        const exportProgressBar = document.getElementById('exportProgressBar');
+        const exportPercentLabel = document.getElementById('exportPercentLabel');
+        const recordingBadge = document.getElementById('recordingBadge');
+        const recordingStatusText = document.getElementById('recordingStatusText');
+
+        function startVideoExport() {
+            if (!hasAudioLoaded) {
+                showToast('Upload an audio file first');
+                return;
+            }
+            ensureAudioGraph();
+            recordedChunks = [];
+
+            const canvasStream = canvas.captureStream(30);
+            const combinedTracks = [
+                ...canvasStream.getVideoTracks(),
+                ...(recordDestNode ? recordDestNode.stream.getAudioTracks() : [])
+            ];
+            const combinedStream = new MediaStream(combinedTracks);
+
+            let mimeType = 'video/webm;codecs=vp9,opus';
+            if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm;codecs=vp8,opus';
+            if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
+
+            try {
+                mediaRecorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 6500000 });
+            } catch (err) {
+                mediaRecorder = new MediaRecorder(combinedStream);
+            }
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                clearInterval(exportProgressInterval);
+                isRecordingVideo = false;
+                audioPlayer.loop = previousLoopState;
+                exportModal.classList.add('hidden');
+                exportModal.classList.remove('flex');
+                recordingBadge.classList.add('hidden');
+                recordingBadge.classList.remove('flex');
+
+                if (recordedChunks.length > 0) {
+                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `brat-lyric-video-${currentAspectRatio.replace(':', 'x')}.webm`;
+                    a.click();
+                    showToast('Video saved');
+                }
+            };
+
+            previousLoopState = audioPlayer.loop;
+            audioPlayer.loop = false;
+            audioPlayer.pause();
+            audioPlayer.playbackRate = 1.0;
+            audioPlayer.currentTime = 0;
+
+            isRecordingVideo = true;
+            exportModal.classList.remove('hidden');
+            exportModal.classList.add('flex');
+            recordingBadge.classList.remove('hidden');
+            recordingBadge.classList.add('flex');
+
+            mediaRecorder.start(100);
+            audioPlayer.play();
+            updatePlayButtonUI();
+
+            exportProgressInterval = setInterval(() => {
+                const dur = audioPlayer.duration || 1;
+                const pct = Math.min(100, Math.round((audioPlayer.currentTime / dur) * 100));
+                exportProgressBar.style.width = `${pct}%`;
+                exportPercentLabel.textContent = `${pct}%`;
+                recordingStatusText.textContent = `REC ${pct}%`;
+            }, 100);
+        }
+
+        function finishVideoRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                audioPlayer.pause();
+                updatePlayButtonUI();
+                mediaRecorder.stop();
+            }
+        }
+
+        document.getElementById('exportVideoBtn').addEventListener('click', startVideoExport);
+        document.getElementById('stopAndSaveExportBtn').addEventListener('click', finishVideoRecording);
+        document.getElementById('cancelExportBtn').addEventListener('click', () => {
+            recordedChunks = [];
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                audioPlayer.pause();
+                updatePlayButtonUI();
+                mediaRecorder.onstop = () => {
+                    clearInterval(exportProgressInterval);
+                    isRecordingVideo = false;
+                    audioPlayer.loop = previousLoopState;
+                    exportModal.classList.add('hidden');
+                    exportModal.classList.remove('flex');
+                    recordingBadge.classList.add('hidden');
+                };
+                mediaRecorder.stop();
+            }
+        });
+
+        function studioLoop() {
+            if (hasAudioLoaded && !audioPlayer.paused && !isScrubbingWaveform) {
+                currentTimeLabel.textContent = formatTimePrecise(audioPlayer.currentTime);
+                if (isFinite(audioPlayer.duration) && audioPlayer.duration > 0) {
+                    audioSeekSlider.value = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                }
+            }
+            drawWaveformAndCues();
+            renderBratVideoFrame();
+            requestAnimationFrame(studioLoop);
+        }
+
+        window.onload = () => {
+            loadProjectFromLocalStorage();
+            refreshAllSyncViews();
+            requestAnimationFrame(studioLoop);
+        };
+    </script>
+</body>
+</html>
