@@ -3,22 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>brat lyric video studio</title>
+    <title>Lyric Video Studio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=PT+Sans+Narrow:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-main: #09070f;
-            --bg-panel: #110d1a;
-            --border-color: #231c35;
-            --accent: #a855f7;
-            --accent-hover: #9333ea;
+            --bg-main: #12141a;
+            --bg-panel: #181b22;
+            --bg-input: #222631;
+            --border-color: #292e3b;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --text-primary: #f3f4f6;
+            --text-secondary: #8b95a5;
+        }
+        * {
+            box-sizing: border-box;
         }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: var(--bg-main);
-            color: #f3effb;
-            overflow-x: hidden;
+            color: var(--text-primary);
+            overflow: hidden;
+            user-select: none;
         }
         .font-mono-code {
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -26,623 +33,639 @@
         .font-brat {
             font-family: 'PT Sans Narrow', 'Arial Narrow', Arial, sans-serif;
         }
-        /* Minimalist Purple Range Slider */
-        input[type="range"] {
+
+        /* Clean NLE Range Sliders: Blue Progress Fill + White Circular Thumb */
+        input[type="range"].nle-slider {
             -webkit-appearance: none;
             appearance: none;
-            background: #1e172e;
-            height: 4px;
+            height: 3px;
             border-radius: 999px;
+            background: linear-gradient(to right, #3b82f6 0%, #3b82f6 var(--val, 50%), #2c3240 var(--val, 50%), #2c3240 100%);
             outline: none;
+            cursor: pointer;
         }
-        input[type="range"]::-webkit-slider-thumb {
+        input[type="range"].nle-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #f3f4f6;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+        input[type="range"].nle-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background: #ffffff;
+        }
+
+        /* Custom NLE Blue Checkboxes */
+        .nle-checkbox {
+            appearance: none;
+            -webkit-appearance: none;
             width: 14px;
             height: 14px;
-            border-radius: 50%;
-            background: #a855f7;
+            border-radius: 3px;
+            background-color: #222631;
+            border: 1px solid #384152;
             cursor: pointer;
-            border: 2px solid #09070f;
-            transition: background-color 0.15s ease, transform 0.12s ease;
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
-        input[type="range"]::-webkit-slider-thumb:hover {
-            background: #c084fc;
-            transform: scale(1.15);
+        .nle-checkbox:checked {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
         }
-        /* Minimal Scrollbars */
+        .nle-checkbox:checked::after {
+            content: '';
+            width: 4px;
+            height: 7px;
+            border: solid white;
+            border-width: 0 1.8px 1.8px 0;
+            transform: rotate(45deg) translate(-0.5px, -0.5px);
+        }
+
+        /* Slim Dark Scrollbars */
         ::-webkit-scrollbar {
             width: 5px;
             height: 5px;
         }
         ::-webkit-scrollbar-track {
-            background: #09070f;
+            background: #12141a;
         }
         ::-webkit-scrollbar-thumb {
-            background: #28203d;
+            background: #2c3240;
             border-radius: 999px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #a855f7;
+            background: #3b82f6;
         }
+
+        .rail-btn {
+            color: #6e7787;
+            transition: color 0.15s ease, background-color 0.15s ease;
+        }
+        .rail-btn:hover {
+            color: #e2e8f0;
+            background-color: #222631;
+        }
+        .rail-btn.active {
+            color: #3b82f6;
+            background-color: rgba(59, 130, 246, 0.14);
+        }
+
         .cue-playing {
-            border-color: #a855f7 !important;
-            background-color: rgba(168, 85, 247, 0.12) !important;
+            border-color: #3b82f6 !important;
+            background-color: rgba(59, 130, 246, 0.12) !important;
         }
         .cue-next-up {
-            border-color: #c084fc !important;
+            border-color: #60a5fa !important;
         }
         .dropzone-active {
-            border-color: #a855f7 !important;
-            background-color: rgba(168, 85, 247, 0.08) !important;
+            outline: 1px dashed #3b82f6 !important;
+            background-color: rgba(59, 130, 246, 0.06) !important;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col selection:bg-[#a855f7] selection:text-white">
+<body class="h-screen w-screen flex flex-col">
 
-    <!-- Minimal Top Header -->
-    <header class="border-b border-[#231c35] bg-[#09070f] sticky top-0 z-40">
-        <div class="max-w-[1400px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <div id="brandLogoBox" class="px-2.5 py-1 rounded bg-[#a855f7] text-white font-bold text-base tracking-tighter select-none cursor-pointer font-brat" title="Click to toggle canvas color theme">
-                    brat
-                </div>
-                <span class="font-semibold text-sm tracking-tight text-white">lyric video studio</span>
+    <!-- TOP FUNCTIONAL UTILITY BAR (No Logos, No Filler) -->
+    <header class="h-11 bg-[#12141a] border-b border-[#292e3b] px-3.5 flex items-center justify-between gap-3 shrink-0 z-30">
+        <!-- Left: Audio Upload & Filename -->
+        <div class="flex items-center gap-2.5 min-w-0">
+            <label class="cursor-pointer text-xs px-3 py-1.5 rounded bg-[#3b82f6] hover:bg-[#2563eb] text-white font-medium transition shrink-0">
+                <span>Upload Audio</span>
+                <input type="file" id="audioUploadInput" accept="audio/*" class="hidden">
+            </label>
+            <span id="audioTrackName" class="text-xs text-[#8b95a5] truncate max-w-[220px] sm:max-w-[300px]">No audio loaded</span>
+        </div>
+
+        <!-- Center: Aspect Ratio & Animation Mode -->
+        <div class="flex items-center gap-2">
+            <div class="flex items-center bg-[#181b22] p-0.5 rounded border border-[#292e3b]">
+                <button data-ratio="1:1" class="ratio-btn px-2.5 py-1 rounded text-xs font-medium bg-[#3b82f6] text-white transition">1:1</button>
+                <button data-ratio="9:16" class="ratio-btn px-2.5 py-1 rounded text-xs font-medium text-[#8b95a5] hover:text-white transition">9:16</button>
+                <button data-ratio="16:9" class="ratio-btn px-2.5 py-1 rounded text-xs font-medium text-[#8b95a5] hover:text-white transition">16:9</button>
             </div>
 
-            <div class="flex items-center flex-wrap gap-2">
-                <button id="resetProjectBtn" class="text-xs px-3 py-1.5 rounded-lg bg-[#110d1a] hover:bg-[#1a1428] text-purple-200/70 hover:text-white border border-[#231c35] transition">
-                    Reset
-                </button>
-                <button id="snapshotPngBtn" class="text-xs px-3 py-1.5 rounded-lg bg-[#110d1a] hover:bg-[#1a1428] text-purple-100 border border-[#231c35] transition">
-                    PNG
-                </button>
-                <button id="exportJsonBtn" class="text-xs px-3 py-1.5 rounded-lg bg-[#110d1a] hover:bg-[#1a1428] text-purple-100 border border-[#231c35] transition">
-                    Save JSON
-                </button>
-                <label class="cursor-pointer text-xs px-3 py-1.5 rounded-lg bg-[#110d1a] hover:bg-[#1a1428] text-purple-100 border border-[#231c35] transition">
-                    <span>Import</span>
-                    <input type="file" id="importTimingFileInput" accept=".lrc,.json,.txt" class="hidden">
-                </label>
-                <button id="exportLrcBtn" class="text-xs px-3 py-1.5 rounded-lg bg-[#110d1a] hover:bg-[#1a1428] text-purple-100 border border-[#231c35] transition">
-                    LRC
-                </button>
-                <button id="exportVideoBtn" class="text-xs px-3.5 py-1.5 rounded-lg bg-[#a855f7] hover:bg-[#9333ea] text-white font-semibold transition shadow-md shadow-[#a855f7]/20">
-                    Export Video
-                </button>
-            </div>
+            <select id="animModeSelect" class="bg-[#181b22] border border-[#292e3b] rounded px-2.5 py-1 text-xs font-medium text-[#f3f4f6] focus:outline-none focus:border-[#3b82f6]">
+                <option value="cumulative">Cumulative</option>
+                <option value="flash">Flash Cut</option>
+                <option value="spotlight">Spotlight</option>
+            </select>
+        </div>
+
+        <!-- Right: Project Actions & Export -->
+        <div class="flex items-center gap-1.5 shrink-0">
+            <button id="resetProjectBtn" class="text-xs px-2.5 py-1 rounded bg-[#181b22] hover:bg-[#222631] text-[#8b95a5] hover:text-white border border-[#292e3b] transition">
+                Reset
+            </button>
+            <label class="cursor-pointer text-xs px-2.5 py-1 rounded bg-[#181b22] hover:bg-[#222631] text-[#d1d5db] border border-[#292e3b] transition">
+                <span>Import</span>
+                <input type="file" id="importTimingFileInput" accept=".lrc,.json,.txt" class="hidden">
+            </label>
+            <button id="exportJsonBtn" class="hidden sm:inline-flex text-xs px-2.5 py-1 rounded bg-[#181b22] hover:bg-[#222631] text-[#d1d5db] border border-[#292e3b] transition">
+                Save JSON
+            </button>
+            <button id="exportLrcBtn" class="hidden sm:inline-flex text-xs px-2.5 py-1 rounded bg-[#181b22] hover:bg-[#222631] text-[#d1d5db] border border-[#292e3b] transition">
+                LRC
+            </button>
+            <button id="snapshotPngBtn" class="hidden md:inline-flex text-xs px-2.5 py-1 rounded bg-[#181b22] hover:bg-[#222631] text-[#d1d5db] border border-[#292e3b] transition">
+                PNG
+            </button>
+            <button id="exportVideoBtn" class="text-xs px-3 py-1 rounded bg-[#3b82f6] hover:bg-[#2563eb] text-white font-semibold transition">
+                Export Video
+            </button>
         </div>
     </header>
 
-    <!-- Status Toast Notification -->
-    <div id="toastBanner" class="fixed bottom-5 right-5 z-50 hidden items-center gap-2 px-4 py-2 rounded-lg bg-[#110d1a] border border-[#a855f7] text-white text-xs shadow-xl">
-        <span class="w-1.5 h-1.5 rounded-full bg-[#a855f7]"></span>
+    <!-- Status Toast -->
+    <div id="toastBanner" class="fixed bottom-4 right-4 z-50 hidden items-center gap-2 px-3.5 py-2 rounded bg-[#222631] border border-[#3b82f6] text-white text-xs shadow-xl">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#3b82f6]"></span>
         <span id="toastMessage">Ready</span>
     </div>
 
-    <!-- Main Workspace Grid -->
-    <main class="max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-5 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow items-start">
+    <!-- MAIN WORKSPACE -->
+    <div class="flex-1 flex min-h-0 overflow-hidden">
 
-        <!-- LEFT COLUMN: Video Canvas Preview & Enlarged Zoomable Audio Deck (5 cols) -->
-        <div class="lg:col-span-5 flex flex-col gap-4 lg:sticky lg:top-20">
+        <!-- FAR-LEFT VERTICAL ICON RAIL (44px) -->
+        <aside class="w-11 bg-[#14171e] border-r border-[#292e3b] flex flex-col items-center py-2.5 gap-2 shrink-0">
+            <button data-tab="lyricsSetupTab" class="rail-btn studio-tab-btn active p-2 rounded" title="1. Lyrics">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+            </button>
+            <button data-tab="liveSyncTab" class="rail-btn studio-tab-btn p-2 rounded" title="2. Tap Sync">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 3"/>
+                </svg>
+            </button>
+            <button data-tab="cueListTab" class="rail-btn studio-tab-btn p-2 rounded" title="3. Cue List">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h10M4 18h10"/>
+                </svg>
+            </button>
+            <button data-tab="styleTab" class="rail-btn studio-tab-btn p-2 rounded" title="4. Style & Bass Reactor">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                </svg>
+            </button>
+        </aside>
 
-            <!-- Video Canvas Preview Stage -->
-            <div class="bg-[#110d1a] border border-[#231c35] rounded-xl p-4 flex flex-col items-center shadow-xl relative">
-                <div class="w-full flex items-center justify-between mb-3 gap-2">
-                    <div class="flex items-center gap-1 bg-[#09070f] p-1 rounded-lg border border-[#231c35]">
-                        <button data-ratio="1:1" class="ratio-btn px-2.5 py-1 rounded text-xs font-medium bg-[#a855f7] text-white transition">1:1</button>
-                        <button data-ratio="9:16" class="ratio-btn px-2.5 py-1 rounded text-xs font-medium text-purple-200/60 hover:text-white transition">9:16</button>
-                        <button data-ratio="16:9" class="ratio-btn px-2.5 py-1 rounded text-xs font-medium text-purple-200/60 hover:text-white transition">16:9</button>
-                    </div>
+        <!-- LEFT INSPECTOR PANEL (360px) -->
+        <aside class="w-80 sm:w-[360px] bg-[#181b22] border-r border-[#292e3b] flex flex-col shrink-0 min-h-0">
 
-                    <div class="flex items-center gap-2">
-                        <select id="animModeSelect" class="bg-[#09070f] border border-[#231c35] rounded-lg px-2.5 py-1 text-xs font-medium text-purple-200 focus:outline-none focus:border-[#a855f7]">
-                            <option value="cumulative">Cumulative</option>
-                            <option value="flash">Flash Cut</option>
-                            <option value="spotlight">Spotlight</option>
-                        </select>
-                        <div id="recordingBadge" class="hidden items-center gap-1.5 px-2.5 py-1 rounded bg-red-950/80 border border-red-500/50 text-red-300 text-[11px] font-mono-code font-bold">
-                            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                            <span id="recordingStatusText">REC 0%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Canvas Frame -->
-                <div id="canvasFrame" class="aspect-square h-[310px] sm:h-[340px] max-w-full rounded overflow-hidden shadow-lg border border-white/10 relative bg-white transition-all duration-150">
-                    <canvas id="bratCanvas" width="1080" height="1080" class="w-full h-full block cursor-pointer" title="Click canvas to cycle theme"></canvas>
-                </div>
-
-                <!-- Status Bar -->
-                <div class="w-full mt-3 flex items-center justify-between text-xs px-3 py-2 rounded-lg bg-[#09070f] border border-[#231c35]">
-                    <div class="flex items-center gap-2 truncate">
-                        <span id="activeCueIndexBadge" class="text-[11px] font-mono-code text-purple-400">STANDBY</span>
-                        <span id="activeCuePreviewText" class="text-purple-100/70 truncate">Upload audio and add lyrics</span>
-                    </div>
-                    <span id="canvasResolutionLabel" class="text-[11px] font-mono-code text-purple-300/40 shrink-0 ml-2">1080x1080</span>
-                </div>
+            <!-- Inspector Top Tab Switcher -->
+            <div class="p-2 border-b border-[#292e3b] grid grid-cols-4 gap-1 bg-[#14171e] shrink-0">
+                <button data-tab="lyricsSetupTab" class="studio-tab-btn py-1.5 px-2 rounded text-[11px] font-semibold bg-[#3b82f6] text-white transition">
+                    Lyrics
+                </button>
+                <button data-tab="liveSyncTab" class="studio-tab-btn py-1.5 px-2 rounded text-[11px] font-semibold text-[#8b95a5] hover:text-white transition flex items-center justify-center gap-1">
+                    <span>Sync</span>
+                    <span id="unonSyncedBadge" class="text-[10px] font-mono-code opacity-80">0/0</span>
+                </button>
+                <button data-tab="cueListTab" class="studio-tab-btn py-1.5 px-2 rounded text-[11px] font-semibold text-[#8b95a5] hover:text-white transition">
+                    Cues
+                </button>
+                <button data-tab="styleTab" class="studio-tab-btn py-1.5 px-2 rounded text-[11px] font-semibold text-[#8b95a5] hover:text-white transition">
+                    Style
+                </button>
             </div>
 
-            <!-- Enlarged Zoomable Audio Spectrum & Waveform Deck -->
-            <div id="audioDropzone" class="bg-[#110d1a] border border-[#231c35] rounded-xl p-4 space-y-3 transition">
-                <div class="flex items-center justify-between gap-2">
-                    <span id="audioTrackName" class="text-xs text-purple-200/70 truncate">No audio loaded (Drop file or click Upload)</span>
-                    <div class="flex items-center gap-1.5 shrink-0">
-                        <button id="toggleSpectrumOverlayBtn" class="text-[11px] px-2.5 py-1 rounded bg-[#09070f] hover:bg-[#1a1428] text-purple-300 border border-[#231c35] transition">
-                            FFT Overlay: On
+            <!-- Scrollable Inspector Body -->
+            <div class="flex-1 overflow-y-auto p-3.5">
+
+                <!-- TAB 1: LYRICS -->
+                <section id="lyricsSetupTab" class="studio-tab-panel space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-white">Lyrics Input</span>
+                        <button id="clearLyricsBtn" class="text-[11px] px-2 py-0.5 rounded bg-[#222631] hover:bg-[#2c3240] text-[#8b95a5] hover:text-white border border-[#292e3b] transition">
+                            Clear
                         </button>
-                        <label class="cursor-pointer text-xs px-3 py-1 rounded bg-[#a855f7] hover:bg-[#9333ea] text-white font-medium transition">
-                            <span>Upload Audio</span>
-                            <input type="file" id="audioUploadInput" accept="audio/*" class="hidden">
-                        </label>
                     </div>
-                </div>
 
-                <!-- High-Res Zoomable Waveform & Live Sub-Bass Spectrum Container -->
-                <div class="rounded-lg bg-[#09070f] border border-[#231c35] p-3 space-y-2.5">
-                    <!-- Top Zoom & Pan Toolbar -->
-                    <div class="flex flex-wrap items-center justify-between gap-2 text-[11px]">
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-purple-300/60 font-medium">Zoom</span>
-                            <button id="zoomOutBtn" class="px-2 py-0.5 rounded bg-[#110d1a] hover:bg-[#1a1428] text-purple-200 border border-[#231c35] font-mono-code">-</button>
-                            <input type="range" id="waveformZoomSlider" min="1" max="32" step="0.5" value="1" class="w-20">
-                            <button id="zoomInBtn" class="px-2 py-0.5 rounded bg-[#110d1a] hover:bg-[#1a1428] text-purple-200 border border-[#231c35] font-mono-code">+</button>
-                            <button id="zoomResetBtn" class="px-2 py-0.5 rounded bg-[#110d1a] hover:bg-[#1a1428] text-purple-300/80 border border-[#231c35] font-mono-code">1.0x</button>
+                    <textarea id="rawLyricsInput" rows="12" placeholder="Paste lyrics here (leave an empty line to start a new screen)..." class="w-full rounded bg-[#12141a] border border-[#292e3b] p-3 text-xs text-white placeholder-[#5a6270] focus:outline-none focus:border-[#3b82f6] font-mono-code leading-relaxed"></textarea>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="splitWordByWordBtn" class="py-2 px-3 rounded bg-[#3b82f6] hover:bg-[#2563eb] text-white font-semibold text-xs transition">
+                            Split by Word
+                        </button>
+                        <button id="splitLineByLineBtn" class="py-2 px-3 rounded bg-[#222631] hover:bg-[#2c3240] text-white font-semibold text-xs border border-[#292e3b] transition">
+                            Split by Line
+                        </button>
+                    </div>
+                </section>
+
+                <!-- TAB 2: TAP SYNC -->
+                <section id="liveSyncTab" class="studio-tab-panel hidden space-y-3">
+                    <div class="flex items-center justify-between gap-2 p-2.5 rounded bg-[#12141a] border border-[#292e3b]">
+                        <button id="startTapSyncBtn" class="py-1.5 px-3 rounded bg-[#3b82f6] hover:bg-[#2563eb] text-white font-semibold text-xs transition">
+                            Start Audio &amp; Sync
+                        </button>
+                        <span id="syncProgressFraction" class="text-xs font-mono-code text-[#8b95a5]">0 / 0</span>
+                    </div>
+
+                    <div class="space-y-2 p-2.5 rounded bg-[#12141a] border border-[#292e3b] text-xs">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[#8b95a5]">Latency Offset</span>
+                            <input type="range" id="latencyOffsetSlider" min="-200" max="50" step="10" value="-60" class="nle-slider w-28">
+                            <span id="latencyOffsetLabel" class="font-mono-code text-[#d1d5db] w-12 text-right">-60ms</span>
                         </div>
-
-                        <div class="flex items-center gap-3">
-                            <label class="inline-flex items-center gap-1.5 text-purple-200/70 cursor-pointer select-none">
-                                <input type="checkbox" id="autoFollowToggle" checked class="accent-[#a855f7] rounded">
-                                <span>Follow Playhead</span>
-                            </label>
-                            <span id="waveformHoverLabel" class="font-mono-code text-purple-300 min-w-[70px] text-right">00:00.00</span>
-                        </div>
-                    </div>
-
-                    <!-- Enlarged 160px Canvas Stage -->
-                    <div id="waveformClickArea" class="relative w-full h-40 rounded-lg overflow-hidden bg-[#07050c] border border-[#1d162b] cursor-ew-resize select-none">
-                        <canvas id="waveformCanvas" width="800" height="160" class="w-full h-40 block"></canvas>
-                    </div>
-
-                    <!-- Horizontal Zoom Pan Scrubber -->
-                    <div class="space-y-1">
-                        <div class="flex items-center justify-between text-[10px] font-mono-code text-purple-300/50">
-                            <span id="viewWindowStartLabel">View: 00:00.00</span>
-                            <span>Wheel to Zoom / Shift+Drag to Pan / Drag Pins to Move</span>
-                            <span id="viewWindowEndLabel">00:00.00</span>
-                        </div>
-                        <input type="range" id="waveformPanSlider" min="0" max="1000" step="1" value="0" disabled class="w-full cursor-pointer disabled:opacity-30">
-                    </div>
-
-                    <!-- Full Track Seek Bar -->
-                    <div class="flex items-center gap-2 pt-1 border-t border-[#181224]">
-                        <span id="currentTimeLabel" class="text-[11px] font-mono-code text-purple-300 w-14">00:00.00</span>
-                        <input type="range" id="audioSeekSlider" min="0" max="100" step="0.01" value="0" disabled class="w-full cursor-pointer disabled:opacity-40">
-                        <span id="durationTimeLabel" class="text-[11px] font-mono-code text-purple-300/50 w-14 text-right">00:00.00</span>
-                    </div>
-                </div>
-
-                <!-- Live Sub-Bass Detector Meter Strip (Always Visible Quick Monitor) -->
-                <div class="rounded-lg bg-[#09070f] border border-[#231c35] p-2.5 space-y-1.5">
-                    <div class="flex items-center justify-between text-[11px]">
-                        <div class="flex items-center gap-2">
-                            <span class="font-medium text-purple-200">Sub-Bass Detector</span>
-                            <span id="subBassFreqBadge" class="text-[10px] font-mono-code px-1.5 py-0.5 rounded bg-[#161124] text-purple-300 border border-[#231c35]">LP 55 Hz</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span id="subBassTriggerStatus" class="text-[10px] font-mono-code uppercase text-purple-300/40">IDLE</span>
-                            <button id="openBassSettingsBtn" class="text-[10px] px-2 py-0.5 rounded bg-[#161124] hover:bg-[#221a36] text-purple-300 border border-[#231c35] transition">
-                                Configure
+                        <div class="grid grid-cols-3 gap-1.5 pt-1">
+                            <button id="autoDistributeBtn" class="py-1 px-2 rounded bg-[#222631] hover:bg-[#2c3240] text-[#d1d5db] border border-[#292e3b] text-[11px] transition">
+                                Auto-Time
+                            </button>
+                            <button id="resetPointerToZeroBtn" class="py-1 px-2 rounded bg-[#222631] hover:bg-[#2c3240] text-[#d1d5db] border border-[#292e3b] text-[11px] transition">
+                                Restart
+                            </button>
+                            <button id="clearAllTimestampsBtn" class="py-1 px-2 rounded bg-[#222631] hover:bg-red-950/40 text-[#8b95a5] hover:text-red-300 border border-[#292e3b] text-[11px] transition">
+                                Clear Times
                             </button>
                         </div>
                     </div>
-                    <!-- Live Sub-Bass Energy Bar with Threshold Marker -->
-                    <div id="quickSubMeterTrack" class="relative w-full h-3 rounded bg-[#06040a] border border-[#1d162b] overflow-hidden cursor-pointer" title="Click on meter to set Sub-Bass Gate Threshold">
-                        <div id="quickSubMeterFill" class="h-full bg-[#a855f7] w-0 transition-none"></div>
-                        <div id="quickSubThresholdLine" class="absolute top-0 bottom-0 w-0.5 bg-white z-10" style="left: 42%;"></div>
+
+                    <!-- Teleprompter -->
+                    <div class="rounded bg-[#12141a] border border-[#292e3b] p-3.5 space-y-3">
+                        <div class="flex items-center justify-between text-[11px] text-[#8b95a5] border-b border-[#292e3b] pb-2">
+                            <div class="flex items-center gap-1.5 truncate">
+                                <span>Prev:</span>
+                                <span id="hudPrevToken" class="font-mono-code text-[#d1d5db] truncate">-</span>
+                            </div>
+                            <span id="hudPrevTime" class="font-mono-code text-[#8b95a5]">-</span>
+                        </div>
+
+                        <div class="py-2 text-center space-y-1">
+                            <div class="flex items-center justify-center gap-2">
+                                <span id="hudNextIndexBadge" class="text-[10px] font-mono-code uppercase text-[#3b82f6]">NEXT WORD</span>
+                                <span id="hudNextScreenFlag" class="hidden px-1.5 py-0.5 rounded bg-white text-black text-[9px] font-bold">NEW SCREEN</span>
+                            </div>
+                            <div id="hudNextTokenText" class="text-2xl font-bold text-white break-words py-1 font-brat">
+                                No lyrics loaded
+                            </div>
+                            <div id="hudCurrentWallPreview" class="text-[11px] text-[#8b95a5] font-mono-code truncate"></div>
+                        </div>
+
+                        <div class="pt-2 border-t border-[#292e3b]">
+                            <div id="hudUpcomingQueue" class="flex items-center gap-1.5 overflow-x-auto py-1 min-h-[28px]"></div>
+                        </div>
                     </div>
+
+                    <!-- Tap Action Buttons -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="tapSpaceBtn" class="py-2.5 px-3 rounded bg-[#3b82f6] hover:bg-[#2563eb] text-white font-semibold text-xs transition">
+                            Stamp Word [Space]
+                        </button>
+                        <button id="tapEnterNewScreenBtn" class="py-2.5 px-3 rounded bg-white hover:bg-gray-200 text-black font-semibold text-xs transition">
+                            New Screen [Enter]
+                        </button>
+                        <button id="tapUndoBtn" class="py-2 px-3 rounded bg-[#222631] hover:bg-[#2c3240] text-[#d1d5db] text-xs border border-[#292e3b] transition">
+                            Undo [Z]
+                        </button>
+                        <button id="tapBlankBeatBtn" class="py-2 px-3 rounded bg-[#222631] hover:bg-[#2c3240] text-[#d1d5db] text-xs border border-[#292e3b] transition">
+                            Blank [B]
+                        </button>
+                    </div>
+                </section>
+
+                <!-- TAB 3: EDIT CUES -->
+                <section id="cueListTab" class="studio-tab-panel hidden space-y-3">
+                    <div class="flex items-center justify-between gap-1.5">
+                        <button id="addManualCueBtn" class="text-xs px-2.5 py-1 rounded bg-[#3b82f6] hover:bg-[#2563eb] text-white font-medium transition">+ Add Cue</button>
+                        <div class="flex items-center gap-1">
+                            <button id="shiftAllMinusBtn" class="px-2 py-1 rounded bg-[#222631] hover:bg-[#2c3240] text-[#d1d5db] text-[11px] font-mono-code border border-[#292e3b]">-0.05s All</button>
+                            <button id="shiftAllPlusBtn" class="px-2 py-1 rounded bg-[#222631] hover:bg-[#2c3240] text-[#d1d5db] text-[11px] font-mono-code border border-[#292e3b]">+0.05s All</button>
+                        </div>
+                    </div>
+
+                    <div id="cueListContainer" class="space-y-1.5"></div>
+                </section>
+
+                <!-- TAB 4: STYLE & BASS INSPECTOR (Clean NLE Accordion Sections) -->
+                <section id="styleTab" class="studio-tab-panel hidden space-y-4">
+
+                    <!-- Section 1: Appearance & Alignment -->
+                    <div class="border-b border-[#292e3b] pb-3.5 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-white">Appearance</span>
+                        </div>
+
+                        <div class="grid grid-cols-6 gap-1.5">
+                            <button data-bg="#FFFFFF" data-fg="#000000" class="theme-swatch py-1.5 rounded border border-[#3b82f6] bg-white text-black text-[10px] font-semibold">White</button>
+                            <button data-bg="#8ACF00" data-fg="#000000" class="theme-swatch py-1.5 rounded border border-[#292e3b] bg-[#8ACF00] text-black text-[10px] font-semibold">Green</button>
+                            <button data-bg="#3b82f6" data-fg="#000000" class="theme-swatch py-1.5 rounded border border-[#292e3b] bg-[#3b82f6] text-black text-[10px] font-semibold">Blue</button>
+                            <button data-bg="#12141a" data-fg="#f3f4f6" class="theme-swatch py-1.5 rounded border border-[#292e3b] bg-[#12141a] text-white text-[10px] font-semibold">Slate</button>
+                            <button data-bg="#000000" data-fg="#FFFFFF" class="theme-swatch py-1.5 rounded border border-[#292e3b] bg-black text-white text-[10px] font-semibold">Black</button>
+                            <button data-bg="#FF66CC" data-fg="#000000" class="theme-swatch py-1.5 rounded border border-[#292e3b] bg-[#FF66CC] text-black text-[10px] font-semibold">Pink</button>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="flex items-center justify-between p-2 rounded bg-[#12141a] border border-[#292e3b]">
+                                <span class="text-[#8b95a5]">Bg</span>
+                                <div class="flex items-center gap-1.5">
+                                    <span id="bgColorHex" class="font-mono-code text-[11px] text-[#d1d5db]">#FFFFFF</span>
+                                    <input type="color" id="bgColorPicker" value="#FFFFFF" class="w-4 h-4 rounded cursor-pointer bg-transparent border-0">
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-2 rounded bg-[#12141a] border border-[#292e3b]">
+                                <span class="text-[#8b95a5]">Text</span>
+                                <div class="flex items-center gap-1.5">
+                                    <span id="fgColorHex" class="font-mono-code text-[11px] text-[#d1d5db]">#000000</span>
+                                    <input type="color" id="fgColorPicker" value="#000000" class="w-4 h-4 rounded cursor-pointer bg-transparent border-0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button data-align="brat-distributed" class="align-btn py-1.5 px-2 rounded text-xs font-medium border border-[#3b82f6] bg-[#222631] text-white transition">
+                                Distributed
+                            </button>
+                            <button data-align="left" class="align-btn py-1.5 px-2 rounded text-xs font-medium border border-[#292e3b] bg-[#12141a] text-[#8b95a5] hover:text-white transition">
+                                Left
+                            </button>
+                            <button data-align="center" class="align-btn py-1.5 px-2 rounded text-xs font-medium border border-[#292e3b] bg-[#12141a] text-[#8b95a5] hover:text-white transition">
+                                Center
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 pt-1 text-xs">
+                            <label class="flex items-center gap-2 p-2 rounded bg-[#12141a] border border-[#292e3b] cursor-pointer">
+                                <input type="checkbox" id="autoFitToggle" checked class="nle-checkbox">
+                                <span>Auto-Fit Size</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded bg-[#12141a] border border-[#292e3b] cursor-pointer">
+                                <input type="checkbox" id="forceLowercase" checked class="nle-checkbox">
+                                <span>Lowercase</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded bg-[#12141a] border border-[#292e3b] cursor-pointer">
+                                <input type="checkbox" id="boldToggle" class="nle-checkbox">
+                                <span>Bold Text</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded bg-[#12141a] border border-[#292e3b] cursor-pointer">
+                                <input type="checkbox" id="mirrorXToggle" class="nle-checkbox">
+                                <span>Mirror X</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded bg-[#12141a] border border-[#292e3b] cursor-pointer">
+                                <input type="checkbox" id="audioReactiveToggle" checked class="nle-checkbox">
+                                <span>Bass Pulse</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded bg-[#12141a] border border-[#292e3b] cursor-pointer">
+                                <input type="checkbox" id="beatFlashToggle" class="nle-checkbox">
+                                <span>Flash on Word</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Typography & Optics -->
+                    <div class="border-b border-[#292e3b] pb-3.5 space-y-2.5 text-xs">
+                        <span class="font-semibold text-white block">Typography &amp; Optics</span>
+
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[#8b95a5] w-24 shrink-0">Font Size</span>
+                            <input type="range" id="fontSizeSlider" min="42" max="280" value="130" class="nle-slider flex-1">
+                            <span id="fontSizeVal" class="font-mono-code text-[#d1d5db] w-14 text-right">Auto</span>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[#8b95a5] w-24 shrink-0">Condense</span>
+                            <input type="range" id="condenseSlider" min="50" max="105" value="76" class="nle-slider flex-1">
+                            <span id="condenseVal" class="font-mono-code text-[#d1d5db] w-14 text-right">76%</span>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[#8b95a5] w-24 shrink-0">Line Height</span>
+                            <input type="range" id="lineHeightSlider" min="80" max="145" value="108" class="nle-slider flex-1">
+                            <span id="lineHeightVal" class="font-mono-code text-[#d1d5db] w-14 text-right">1.08</span>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[#8b95a5] w-24 shrink-0">Padding</span>
+                            <input type="range" id="paddingSlider" min="16" max="180" value="54" class="nle-slider flex-1">
+                            <span id="paddingVal" class="font-mono-code text-[#d1d5db] w-14 text-right">54px</span>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[#8b95a5] w-24 shrink-0">Blur</span>
+                            <input type="range" id="blurSlider" min="0" max="55" value="13" class="nle-slider flex-1">
+                            <span id="blurVal" class="font-mono-code text-[#d1d5db] w-14 text-right">1.3px</span>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[#8b95a5] w-24 shrink-0">JPEG Crunch</span>
+                            <input type="range" id="crunchSlider" min="0" max="75" value="24" class="nle-slider flex-1">
+                            <span id="crunchVal" class="font-mono-code text-[#d1d5db] w-14 text-right">24%</span>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Upgraded Sub-Bass Pulse Reactor -->
+                    <div id="bassReactorSection" class="space-y-2.5 text-xs">
+                        <div class="flex items-center justify-between">
+                            <span class="font-semibold text-white">Sub-Bass Pulse Reactor</span>
+                            <button id="testBassHitBtn" class="px-2 py-0.5 rounded bg-[#222631] hover:bg-[#2c3240] border border-[#292e3b] text-[11px] text-[#3b82f6] font-medium transition">
+                                Test Hit
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-1 bg-[#12141a] p-1 rounded border border-[#292e3b]">
+                            <button data-bassmode="sub" class="bass-preset-btn py-1 rounded text-[11px] font-medium bg-[#3b82f6] text-white transition">55 Hz</button>
+                            <button data-bassmode="kick" class="bass-preset-btn py-1 rounded text-[11px] font-medium text-[#8b95a5] hover:text-white transition">95 Hz</button>
+                            <button data-bassmode="full" class="bass-preset-btn py-1 rounded text-[11px] font-medium text-[#8b95a5] hover:text-white transition">150 Hz</button>
+                        </div>
+
+                        <!-- Live Sub-Bass Calibration Meter -->
+                        <div class="p-2.5 rounded bg-[#12141a] border border-[#292e3b] space-y-1.5">
+                            <div class="flex items-center justify-between text-[11px] font-mono-code">
+                                <span class="text-[#8b95a5]">Sub Level</span>
+                                <span id="styleSubMeterReadout" class="text-[#d1d5db]">0% | Gate: 38%</span>
+                            </div>
+                            <div id="styleSubMeterTrack" class="relative w-full h-3.5 rounded bg-[#0b0d11] border border-[#292e3b] overflow-hidden cursor-pointer" title="Click to set Gate Threshold">
+                                <div id="styleSubMeterFill" class="h-full bg-[#3b82f6] w-0 transition-none"></div>
+                                <div id="styleSubThresholdLine" class="absolute top-0 bottom-0 w-0.5 bg-white z-10" style="left: 38%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[#8b95a5] w-24 shrink-0">LP Cutoff</span>
+                            <input type="range" id="bassCutoffSlider" min="28" max="200" step="1" value="55" class="nle-slider flex-1">
+                            <span id="bassCutoffVal" class="font-mono-code text-[#d1d5db] w-14 text-right">55 Hz</span>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[#8b95a5] w-24 shrink-0">Input Gain</span>
+                            <input type="range" id="bassGainSlider" min="0.4" max="4.0" step="0.05" value="1.75" class="nle-slider flex-1">
+                            <span id="bassGainVal" class="font-mono-code text-[#d1d5db] w-14 text-right">1.75x</span>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[#8b95a5] w-24 shrink-0">Gate</span>
+                            <input type="range" id="bassThresholdSlider" min="5" max="92" step="1" value="38" class="nle-slider flex-1">
+                            <span id="bassThresholdVal" class="font-mono-code text-[#d1d5db] w-14 text-right">38%</span>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[#8b95a5] w-24 shrink-0">Punch Zoom</span>
+                            <input type="range" id="bassIntensitySlider" min="0" max="40" step="1" value="16" class="nle-slider flex-1">
+                            <span id="bassIntensityVal" class="font-mono-code text-[#d1d5db] w-14 text-right">16%</span>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[#8b95a5] w-24 shrink-0">Transient Snap</span>
+                            <input type="range" id="bassSnapSlider" min="0" max="100" step="5" value="75" class="nle-slider flex-1">
+                            <span id="bassSnapVal" class="font-mono-code text-[#d1d5db] w-14 text-right">75%</span>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[#8b95a5] w-24 shrink-0">RGB Split</span>
+                            <input type="range" id="bassChromaSlider" min="0" max="28" step="1" value="8" class="nle-slider flex-1">
+                            <span id="bassChromaVal" class="font-mono-code text-[#d1d5db] w-14 text-right">8px</span>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[#8b95a5] w-24 shrink-0">Blur Kick</span>
+                            <input type="range" id="bassBlurKickSlider" min="0" max="60" step="2" value="16" class="nle-slider flex-1">
+                            <span id="bassBlurKickVal" class="font-mono-code text-[#d1d5db] w-14 text-right">1.6px</span>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[#8b95a5] w-24 shrink-0">Release</span>
+                            <input type="range" id="bassReleaseSlider" min="25" max="92" step="1" value="62" class="nle-slider flex-1">
+                            <span id="bassReleaseVal" class="font-mono-code text-[#d1d5db] w-14 text-right">62%</span>
+                        </div>
+                    </div>
+
+                </section>
+            </div>
+        </aside>
+
+        <!-- RIGHT MAIN COLUMN: TOP CANVAS VIEWPORT + BOTTOM WAVEFORM & LYRIC PIN DECK -->
+        <div class="flex-1 flex flex-col min-w-0 bg-[#0e1015]">
+
+            <!-- TOP VIEWPORT STAGE -->
+            <div id="audioDropzone" class="flex-1 relative flex flex-col items-center justify-center p-4 min-h-[220px] overflow-hidden">
+                <div id="recordingBadge" class="hidden absolute top-3 right-4 items-center gap-1.5 px-2.5 py-1 rounded bg-red-950/90 border border-red-500/50 text-red-300 text-[11px] font-mono-code font-bold z-10">
+                    <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                    <span id="recordingStatusText">REC 0%</span>
                 </div>
 
-                <!-- Transport Controls -->
-                <div class="flex flex-wrap items-center justify-between gap-2">
+                <!-- Canvas Frame -->
+                <div id="canvasFrame" class="aspect-square max-h-[calc(100%-32px)] rounded overflow-hidden shadow-2xl border border-[#292e3b] relative bg-white flex items-center justify-center">
+                    <canvas id="bratCanvas" width="1080" height="1080" class="w-full h-full block cursor-pointer" title="Click canvas to cycle color theme"></canvas>
+                </div>
+
+                <!-- Active Cue Status Strip -->
+                <div class="mt-2 flex items-center justify-between w-full max-w-xl px-3 py-1 rounded bg-[#181b22] border border-[#292e3b] text-xs">
+                    <div class="flex items-center gap-2 truncate">
+                        <span id="activeCueIndexBadge" class="text-[11px] font-mono-code text-[#3b82f6]">STANDBY</span>
+                        <span id="activeCuePreviewText" class="text-[#d1d5db] truncate">Upload audio and add lyrics</span>
+                    </div>
+                    <span id="canvasResolutionLabel" class="text-[11px] font-mono-code text-[#8b95a5] shrink-0 ml-2">1080x1080</span>
+                </div>
+            </div>
+
+            <!-- BOTTOM AUDIO WAVEFORM & PIN TIMELINE DECK (Restored Original Waveform + Pins) -->
+            <div class="bg-[#181b22] border-t border-[#292e3b] p-3 space-y-2.5 shrink-0">
+
+                <!-- Row 1: Transport Controls + Full Track Seek Bar + Sub-Bass Quick Meter -->
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <!-- Transport Buttons -->
                     <div class="flex items-center gap-1.5">
-                        <button id="playPauseBtn" disabled class="py-1.5 px-4 rounded-lg bg-[#a855f7] hover:bg-[#9333ea] disabled:opacity-40 disabled:pointer-events-none text-white font-semibold text-xs transition">
+                        <button id="playPauseBtn" disabled class="py-1 px-3.5 rounded bg-[#3b82f6] hover:bg-[#2563eb] disabled:opacity-40 disabled:pointer-events-none text-white font-semibold text-xs transition">
                             <span id="playBtnText">Play</span>
                         </button>
-                        <button id="restartAudioBtn" disabled class="py-1.5 px-2.5 rounded-lg bg-[#09070f] hover:bg-[#1a1428] disabled:opacity-40 text-purple-200 text-xs font-mono-code border border-[#231c35] transition">
+                        <button id="restartAudioBtn" disabled class="py-1 px-2 rounded bg-[#222631] hover:bg-[#2c3240] disabled:opacity-40 text-[#d1d5db] text-xs font-mono-code border border-[#292e3b] transition">
                             0:00
                         </button>
-                        <button id="back2SecBtn" disabled class="py-1.5 px-2.5 rounded-lg bg-[#09070f] hover:bg-[#1a1428] disabled:opacity-40 text-purple-200 text-xs font-mono-code border border-[#231c35] transition">
+                        <button id="back2SecBtn" disabled class="py-1 px-2 rounded bg-[#222631] hover:bg-[#2c3240] disabled:opacity-40 text-[#d1d5db] text-xs font-mono-code border border-[#292e3b] transition">
                             -2.0s
                         </button>
-                        <label class="inline-flex items-center gap-1.5 text-xs text-purple-200/70 ml-1 cursor-pointer select-none">
-                            <input type="checkbox" id="loopAudioToggle" checked class="accent-[#a855f7] rounded">
+                        <label class="inline-flex items-center gap-1.5 text-xs text-[#8b95a5] ml-1 cursor-pointer">
+                            <input type="checkbox" id="loopAudioToggle" checked class="nle-checkbox">
                             <span>Loop</span>
                         </label>
-                    </div>
-
-                    <div class="flex items-center gap-1 bg-[#09070f] p-1 rounded-lg border border-[#231c35]">
-                        <button data-speed="0.5" class="speed-btn px-2 py-0.5 rounded text-[11px] font-mono-code text-purple-200/60 hover:text-white transition">0.5x</button>
-                        <button data-speed="0.75" class="speed-btn px-2 py-0.5 rounded text-[11px] font-mono-code text-purple-200/60 hover:text-white transition">0.75x</button>
-                        <button data-speed="1" class="speed-btn px-2 py-0.5 rounded text-[11px] font-mono-code bg-[#a855f7] text-white transition">1.0x</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- RIGHT COLUMN: 4-Tab Editor Workspace (7 cols) -->
-        <div class="lg:col-span-7 flex flex-col gap-4">
-
-            <!-- Clean 4-Tab Navigation -->
-            <div class="bg-[#110d1a] border border-[#231c35] rounded-xl p-1 grid grid-cols-4 gap-1">
-                <button data-tab="lyricsSetupTab" class="studio-tab-btn py-2 px-3 rounded-lg text-xs font-semibold bg-[#a855f7] text-white transition">
-                    1. Lyrics
-                </button>
-                <button data-tab="liveSyncTab" class="studio-tab-btn py-2 px-3 rounded-lg text-xs font-semibold text-purple-200/70 hover:text-white transition flex items-center justify-center gap-1.5">
-                    <span>2. Tap Sync</span>
-                    <span id="unonSyncedBadge" class="text-[10px] font-mono-code opacity-75">0/0</span>
-                </button>
-                <button data-tab="cueListTab" class="studio-tab-btn py-2 px-3 rounded-lg text-xs font-semibold text-purple-200/70 hover:text-white transition">
-                    3. Edit Cues
-                </button>
-                <button data-tab="styleTab" class="studio-tab-btn py-2 px-3 rounded-lg text-xs font-semibold text-purple-200/70 hover:text-white transition">
-                    4. Style
-                </button>
-            </div>
-
-            <!-- TAB 1: LYRICS -->
-            <section id="lyricsSetupTab" class="studio-tab-panel bg-[#110d1a] border border-[#231c35] rounded-xl p-5 space-y-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h2 class="text-sm font-semibold text-white">Paste Lyrics</h2>
-                        <p class="text-xs text-purple-200/60 mt-0.5">Leave an empty line between stanzas to start a new screen block automatically.</p>
-                    </div>
-                    <button id="clearLyricsBtn" class="text-xs px-2.5 py-1 rounded-lg bg-[#09070f] hover:bg-[#1a1428] text-purple-200/70 hover:text-white border border-[#231c35] transition">
-                        Clear
-                    </button>
-                </div>
-
-                <textarea id="rawLyricsInput" rows="11" placeholder="Paste lyrics here..." class="w-full rounded-lg bg-[#09070f] border border-[#231c35] p-3.5 text-sm text-white placeholder-purple-300/30 focus:outline-none focus:border-[#a855f7] font-mono-code leading-relaxed"></textarea>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <button id="splitWordByWordBtn" class="py-2.5 px-4 rounded-lg bg-[#a855f7] hover:bg-[#9333ea] text-white font-semibold text-xs transition">
-                        Split by Word
-                    </button>
-                    <button id="splitLineByLineBtn" class="py-2.5 px-4 rounded-lg bg-[#1a1428] hover:bg-[#251c38] text-white font-semibold text-xs border border-[#231c35] transition">
-                        Split by Line
-                    </button>
-                </div>
-            </section>
-
-            <!-- TAB 2: TAP SYNC -->
-            <section id="liveSyncTab" class="studio-tab-panel hidden bg-[#110d1a] border border-[#231c35] rounded-xl p-5 space-y-4">
-                <!-- Top Sync Bar -->
-                <div class="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-[#09070f] border border-[#231c35]">
-                    <div class="flex items-center gap-3">
-                        <button id="startTapSyncBtn" class="py-2 px-3.5 rounded-lg bg-[#a855f7] hover:bg-[#9333ea] text-white font-semibold text-xs transition">
-                            Start Audio &amp; Sync
-                        </button>
-                        <span id="syncProgressFraction" class="text-xs font-mono-code text-purple-300">0 / 0</span>
-                    </div>
-
-                    <div class="flex flex-wrap items-center gap-2">
-                        <div class="flex items-center gap-2 bg-[#110d1a] px-2.5 py-1 rounded border border-[#231c35]">
-                            <span class="text-[11px] text-purple-200/70">Latency</span>
-                            <input type="range" id="latencyOffsetSlider" min="-200" max="50" step="10" value="-60" class="w-16">
-                            <span id="latencyOffsetLabel" class="text-[11px] font-mono-code text-purple-300 w-11 text-right">-60ms</span>
+                        <div class="flex items-center gap-0.5 bg-[#12141a] p-0.5 rounded border border-[#292e3b] ml-1">
+                            <button data-speed="0.5" class="speed-btn px-1.5 py-0.5 rounded text-[11px] font-mono-code text-[#8b95a5] hover:text-white transition">0.5x</button>
+                            <button data-speed="0.75" class="speed-btn px-1.5 py-0.5 rounded text-[11px] font-mono-code text-[#8b95a5] hover:text-white transition">0.75x</button>
+                            <button data-speed="1" class="speed-btn px-1.5 py-0.5 rounded text-[11px] font-mono-code bg-[#3b82f6] text-white transition">1.0x</button>
                         </div>
-                        <button id="autoDistributeBtn" class="text-xs px-2.5 py-1 rounded bg-[#110d1a] hover:bg-[#1a1428] text-purple-200 border border-[#231c35] transition">
-                            Auto-Distribute
-                        </button>
-                        <button id="resetPointerToZeroBtn" class="text-xs px-2.5 py-1 rounded bg-[#110d1a] hover:bg-[#1a1428] text-purple-200 border border-[#231c35] transition">
-                            Restart
-                        </button>
-                        <button id="clearAllTimestampsBtn" class="text-xs px-2.5 py-1 rounded bg-[#110d1a] hover:bg-red-950/40 text-purple-200/70 hover:text-red-300 border border-[#231c35] transition">
-                            Clear Times
+                    </div>
+
+                    <!-- Full Track Seek Scrubber -->
+                    <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+                        <span id="currentTimeLabel" class="text-[11px] font-mono-code text-[#d1d5db] w-14">00:00.00</span>
+                        <input type="range" id="audioSeekSlider" min="0" max="100" step="0.01" value="0" disabled class="nle-slider w-full disabled:opacity-40">
+                        <span id="durationTimeLabel" class="text-[11px] font-mono-code text-[#8b95a5] w-14 text-right">00:00.00</span>
+                    </div>
+
+                    <!-- Compact Live Sub-Bass Meter Strip -->
+                    <div class="flex items-center gap-2 bg-[#12141a] px-2.5 py-1 rounded border border-[#292e3b]">
+                        <span id="subBassFreqBadge" class="text-[10px] font-mono-code text-[#8b95a5]">LP 55Hz</span>
+                        <div id="quickSubMeterTrack" class="relative w-24 h-2.5 rounded bg-[#0b0d11] border border-[#292e3b] overflow-hidden cursor-pointer" title="Click to set Sub-Bass Gate Threshold">
+                            <div id="quickSubMeterFill" class="h-full bg-[#3b82f6] w-0 transition-none"></div>
+                            <div id="quickSubThresholdLine" class="absolute top-0 bottom-0 w-0.5 bg-white z-10" style="left: 38%;"></div>
+                        </div>
+                        <span id="subBassTriggerStatus" class="text-[10px] font-mono-code text-[#8b95a5] w-10 text-right">IDLE</span>
+                        <button id="openBassSettingsBtn" class="text-[10px] px-1.5 py-0.5 rounded bg-[#222631] hover:bg-[#2c3240] text-[#d1d5db] border border-[#292e3b] transition">
+                            Setup
                         </button>
                     </div>
                 </div>
 
-                <!-- Minimal Teleprompter -->
-                <div class="rounded-lg bg-[#09070f] border border-[#231c35] p-5 space-y-4">
-                    <div class="flex items-center justify-between text-xs text-purple-300/60 border-b border-[#231c35] pb-2">
-                        <div class="flex items-center gap-2 truncate">
-                            <span>Previous:</span>
-                            <span id="hudPrevToken" class="font-mono-code text-purple-200 truncate">-</span>
-                        </div>
-                        <span id="hudPrevTime" class="font-mono-code text-purple-300">-</span>
-                    </div>
-
-                    <div class="py-4 text-center space-y-1.5">
-                        <div class="flex items-center justify-center gap-2">
-                            <span id="hudNextIndexBadge" class="text-[11px] font-mono-code uppercase text-purple-400">NEXT WORD</span>
-                            <span id="hudNextScreenFlag" class="hidden px-1.5 py-0.5 rounded bg-white text-black text-[10px] font-bold">NEW SCREEN</span>
-                        </div>
-                        <div id="hudNextTokenText" class="text-3xl sm:text-4xl font-bold text-white break-words py-1 select-none font-brat">
-                            No lyrics loaded
-                        </div>
-                        <div id="hudCurrentWallPreview" class="text-xs text-purple-300/50 font-mono-code max-w-md mx-auto truncate"></div>
-                    </div>
-
-                    <div class="pt-2 border-t border-[#231c35]">
-                        <div id="hudUpcomingQueue" class="flex items-center gap-1.5 overflow-x-auto py-1 min-h-[32px]">
-                            <span class="text-xs text-purple-300/40">Split lyrics in Tab 1 to populate queue</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tap Action Buttons -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    <button id="tapSpaceBtn" class="py-3 px-3 rounded-lg bg-[#a855f7] hover:bg-[#9333ea] text-white font-semibold text-xs transition text-center">
-                        Stamp Word [Space]
-                    </button>
-                    <button id="tapEnterNewScreenBtn" class="py-3 px-3 rounded-lg bg-white hover:bg-purple-100 text-black font-semibold text-xs transition text-center">
-                        New Screen [Enter]
-                    </button>
-                    <button id="tapUndoBtn" class="py-3 px-3 rounded-lg bg-[#09070f] hover:bg-[#1a1428] text-purple-200 font-medium text-xs border border-[#231c35] transition text-center">
-                        Undo [Z]
-                    </button>
-                    <button id="tapBlankBeatBtn" class="py-3 px-3 rounded-lg bg-[#09070f] hover:bg-[#1a1428] text-purple-200 font-medium text-xs border border-[#231c35] transition text-center">
-                        Blank [B]
-                    </button>
-                </div>
-            </section>
-
-            <!-- TAB 3: EDIT CUES -->
-            <section id="cueListTab" class="studio-tab-panel hidden bg-[#110d1a] border border-[#231c35] rounded-xl p-5 space-y-4">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <h2 class="text-sm font-semibold text-white">Cue List</h2>
+                <!-- Row 2: Zoom Toolbar & View Readouts -->
+                <div class="flex flex-wrap items-center justify-between gap-2 text-[11px]">
                     <div class="flex items-center gap-1.5">
-                        <button id="addManualCueBtn" class="text-xs px-2.5 py-1 rounded bg-[#a855f7]/20 hover:bg-[#a855f7]/30 text-purple-200 font-medium border border-[#a855f7]/40 transition">Add Cue</button>
-                        <button id="shiftAllMinusBtn" class="px-2.5 py-1 rounded bg-[#09070f] hover:bg-[#1a1428] text-purple-200 text-xs font-mono-code border border-[#231c35]">-0.05s All</button>
-                        <button id="shiftAllPlusBtn" class="px-2.5 py-1 rounded bg-[#09070f] hover:bg-[#1a1428] text-purple-200 text-xs font-mono-code border border-[#231c35]">+0.05s All</button>
+                        <span class="text-[#8b95a5]">Zoom</span>
+                        <button id="zoomOutBtn" class="px-2 py-0.5 rounded bg-[#222631] hover:bg-[#2c3240] text-[#d1d5db] border border-[#292e3b] font-mono-code">-</button>
+                        <input type="range" id="waveformZoomSlider" min="1" max="32" step="0.5" value="1" class="nle-slider w-24">
+                        <button id="zoomInBtn" class="px-2 py-0.5 rounded bg-[#222631] hover:bg-[#2c3240] text-[#d1d5db] border border-[#292e3b] font-mono-code">+</button>
+                        <button id="zoomResetBtn" class="px-2 py-0.5 rounded bg-[#222631] hover:bg-[#2c3240] text-[#d1d5db] border border-[#292e3b] font-mono-code">1.0x</button>
+                        <button id="toggleSpectrumOverlayBtn" class="ml-1 px-2 py-0.5 rounded bg-[#222631] hover:bg-[#2c3240] text-[#d1d5db] border border-[#292e3b] transition">
+                            FFT Overlay: On
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <span id="viewWindowStartLabel" class="font-mono-code text-[#8b95a5]">00:00.00</span>
+                        <span class="text-[#5a6270]">-</span>
+                        <span id="viewWindowEndLabel" class="font-mono-code text-[#8b95a5]">00:00.00</span>
+                        <label class="inline-flex items-center gap-1.5 text-[#8b95a5] cursor-pointer ml-2">
+                            <input type="checkbox" id="autoFollowToggle" checked class="nle-checkbox">
+                            <span>Follow Playhead</span>
+                        </label>
+                        <span id="waveformHoverLabel" class="font-mono-code text-[#3b82f6] min-w-[75px] text-right">00:00.00</span>
                     </div>
                 </div>
 
-                <div id="cueListContainer" class="space-y-1.5 max-h-[460px] overflow-y-auto pr-1"></div>
-            </section>
-
-            <!-- TAB 4: STYLE -->
-            <section id="styleTab" class="studio-tab-panel hidden bg-[#110d1a] border border-[#231c35] rounded-xl p-5 space-y-5">
-                <!-- Color Presets -->
-                <div class="space-y-2.5">
-                    <span class="text-xs font-semibold text-purple-200/80 block">Color Presets</span>
-                    <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                        <button data-bg="#FFFFFF" data-fg="#000000" class="theme-swatch py-2 px-2 rounded-lg border border-[#a855f7] bg-[#09070f] text-xs text-purple-100 font-medium transition">
-                            White
-                        </button>
-                        <button data-bg="#A855F7" data-fg="#000000" class="theme-swatch py-2 px-2 rounded-lg border border-[#231c35] bg-[#09070f] text-xs text-purple-100 font-medium transition">
-                            Purple
-                        </button>
-                        <button data-bg="#8ACF00" data-fg="#000000" class="theme-swatch py-2 px-2 rounded-lg border border-[#231c35] bg-[#09070f] text-xs text-purple-100 font-medium transition">
-                            Green
-                        </button>
-                        <button data-bg="#0b0714" data-fg="#c084fc" class="theme-swatch py-2 px-2 rounded-lg border border-[#231c35] bg-[#09070f] text-xs text-purple-100 font-medium transition">
-                            Violet Dark
-                        </button>
-                        <button data-bg="#000000" data-fg="#FFFFFF" class="theme-swatch py-2 px-2 rounded-lg border border-[#231c35] bg-[#09070f] text-xs text-purple-100 font-medium transition">
-                            Black
-                        </button>
-                        <button data-bg="#FF66CC" data-fg="#000000" class="theme-swatch py-2 px-2 rounded-lg border border-[#231c35] bg-[#09070f] text-xs text-purple-100 font-medium transition">
-                            Pink
-                        </button>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3 pt-1">
-                        <div class="flex items-center justify-between p-2 rounded-lg bg-[#09070f] border border-[#231c35]">
-                            <span class="text-xs text-purple-200/80">Background</span>
-                            <div class="flex items-center gap-2">
-                                <span id="bgColorHex" class="text-xs font-mono-code text-purple-300/60">#FFFFFF</span>
-                                <input type="color" id="bgColorPicker" value="#FFFFFF" class="w-5 h-5 rounded cursor-pointer bg-transparent border-0">
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between p-2 rounded-lg bg-[#09070f] border border-[#231c35]">
-                            <span class="text-xs text-purple-200/80">Text</span>
-                            <div class="flex items-center gap-2">
-                                <span id="fgColorHex" class="text-xs font-mono-code text-purple-300/60">#000000</span>
-                                <input type="color" id="fgColorPicker" value="#000000" class="w-5 h-5 rounded cursor-pointer bg-transparent border-0">
-                            </div>
-                        </div>
-                    </div>
+                <!-- Row 3: Original Single Zoomable Waveform Canvas with Draggable Lyric Pins -->
+                <div id="waveformClickArea" class="relative w-full h-36 rounded overflow-hidden bg-[#12141a] border border-[#292e3b] cursor-ew-resize select-none">
+                    <canvas id="waveformCanvas" width="1000" height="144" class="w-full h-36 block"></canvas>
                 </div>
 
-                <!-- Alignment & Style Toggles -->
-                <div class="space-y-2.5 pt-3 border-t border-[#231c35]">
-                    <span class="text-xs font-semibold text-purple-200/80 block">Alignment &amp; Options</span>
-                    <div class="grid grid-cols-3 gap-2">
-                        <button data-align="brat-distributed" class="align-btn py-2 px-3 rounded-lg text-xs font-medium border border-[#a855f7] bg-[#1a1428] text-white transition">
-                            Distributed
-                        </button>
-                        <button data-align="left" class="align-btn py-2 px-3 rounded-lg text-xs font-medium border border-[#231c35] bg-[#09070f] text-purple-200/70 hover:text-white transition">
-                            Left
-                        </button>
-                        <button data-align="center" class="align-btn py-2 px-3 rounded-lg text-xs font-medium border border-[#231c35] bg-[#09070f] text-purple-200/70 hover:text-white transition">
-                            Center
-                        </button>
-                    </div>
-
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
-                        <label class="flex items-center justify-between p-2 rounded-lg bg-[#09070f] border border-[#231c35] cursor-pointer text-xs text-purple-100">
-                            <span>Auto-Fit Size</span>
-                            <input type="checkbox" id="autoFitToggle" checked class="accent-[#a855f7]">
-                        </label>
-                        <label class="flex items-center justify-between p-2 rounded-lg bg-[#09070f] border border-[#231c35] cursor-pointer text-xs text-purple-100">
-                            <span>Lowercase</span>
-                            <input type="checkbox" id="forceLowercase" checked class="accent-[#a855f7]">
-                        </label>
-                        <label class="flex items-center justify-between p-2 rounded-lg bg-[#09070f] border border-[#231c35] cursor-pointer text-xs text-purple-100">
-                            <span>Bold Text</span>
-                            <input type="checkbox" id="boldToggle" class="accent-[#a855f7]">
-                        </label>
-                        <label class="flex items-center justify-between p-2 rounded-lg bg-[#09070f] border border-[#231c35] cursor-pointer text-xs text-purple-100">
-                            <span>Mirror X</span>
-                            <input type="checkbox" id="mirrorXToggle" class="accent-[#a855f7]">
-                        </label>
-                        <label class="flex items-center justify-between p-2 rounded-lg bg-[#09070f] border border-[#231c35] cursor-pointer text-xs text-purple-100">
-                            <span>Bass Pulse</span>
-                            <input type="checkbox" id="audioReactiveToggle" checked class="accent-[#a855f7]">
-                        </label>
-                        <label class="flex items-center justify-between p-2 rounded-lg bg-[#09070f] border border-[#231c35] cursor-pointer text-xs text-purple-100">
-                            <span>Flash on Word</span>
-                            <input type="checkbox" id="beatFlashToggle" class="accent-[#a855f7]">
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Dedicated Sub-Bass Pulse Reactor Settings Panel -->
-                <div id="bassReactorSection" class="space-y-3.5 pt-3 border-t border-[#231c35]">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <div>
-                            <span class="text-xs font-semibold text-white block">Sub-Bass Pulse Reactor</span>
-                            <span class="text-[11px] text-purple-200/60">Isolates low-end frequencies via 24dB/oct low-pass filter so vocals and synths do not false-trigger the pulse</span>
-                        </div>
-                        <div class="flex items-center gap-1 bg-[#09070f] p-1 rounded-lg border border-[#231c35]">
-                            <button data-bassmode="sub" class="bass-preset-btn px-2.5 py-1 rounded text-[11px] font-medium bg-[#a855f7] text-white transition">Sub Only (55 Hz)</button>
-                            <button data-bassmode="kick" class="bass-preset-btn px-2.5 py-1 rounded text-[11px] font-medium text-purple-200/60 hover:text-white transition">Sub + Kick (95 Hz)</button>
-                            <button data-bassmode="full" class="bass-preset-btn px-2.5 py-1 rounded text-[11px] font-medium text-purple-200/60 hover:text-white transition">Low End (150 Hz)</button>
-                        </div>
-                    </div>
-
-                    <!-- Interactive Live Sub-Bass Calibration Meter -->
-                    <div class="p-3 rounded-lg bg-[#09070f] border border-[#231c35] space-y-2">
-                        <div class="flex items-center justify-between text-[11px] font-mono-code">
-                            <span class="text-purple-200/70">ISOLATED SUB-BASS LEVEL</span>
-                            <span id="styleSubMeterReadout" class="text-purple-300">Level: 0% | Gate: 42%</span>
-                        </div>
-                        <div id="styleSubMeterTrack" class="relative w-full h-5 rounded bg-[#050308] border border-[#1d162b] overflow-hidden cursor-pointer" title="Click or drag to position the Threshold Gate">
-                            <div id="styleSubMeterFill" class="h-full bg-[#a855f7] w-0 transition-none"></div>
-                            <div id="styleSubThresholdLine" class="absolute top-0 bottom-0 w-0.5 bg-white z-10" style="left: 42%;"></div>
-                        </div>
-                        <div class="flex justify-between text-[10px] text-purple-300/40 font-mono-code">
-                            <span>0% (Noise Floor)</span>
-                            <span>White Line = Gate Threshold (Only peaks above line pulse)</span>
-                            <span>100%</span>
-                        </div>
-                    </div>
-
-                    <!-- Bass Reactor Sliders -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                            <div class="flex justify-between text-xs">
-                                <span class="text-purple-200/80">Low-Pass Cutoff (Sub Isolation)</span>
-                                <span id="bassCutoffVal" class="font-mono-code text-purple-300">55 Hz</span>
-                            </div>
-                            <input type="range" id="bassCutoffSlider" min="28" max="200" step="1" value="55" class="w-full">
-                        </div>
-
-                        <div class="space-y-1">
-                            <div class="flex justify-between text-xs">
-                                <span class="text-purple-200/80">Sensitivity / Input Gain</span>
-                                <span id="bassGainVal" class="font-mono-code text-purple-300">1.6x</span>
-                            </div>
-                            <input type="range" id="bassGainSlider" min="0.4" max="4.0" step="0.05" value="1.6" class="w-full">
-                        </div>
-
-                        <div class="space-y-1">
-                            <div class="flex justify-between text-xs">
-                                <span class="text-purple-200/80">Threshold Gate</span>
-                                <span id="bassThresholdVal" class="font-mono-code text-purple-300">42%</span>
-                            </div>
-                            <input type="range" id="bassThresholdSlider" min="5" max="92" step="1" value="42" class="w-full">
-                        </div>
-
-                        <div class="space-y-1">
-                            <div class="flex justify-between text-xs">
-                                <span class="text-purple-200/80">Pulse Scale Intensity</span>
-                                <span id="bassIntensityVal" class="font-mono-code text-purple-300">12%</span>
-                            </div>
-                            <input type="range" id="bassIntensitySlider" min="2" max="35" step="1" value="12" class="w-full">
-                        </div>
-
-                        <div class="space-y-1">
-                            <div class="flex justify-between text-xs">
-                                <span class="text-purple-200/80">Release Decay Smoothing</span>
-                                <span id="bassReleaseVal" class="font-mono-code text-purple-300">Fast (65%)</span>
-                            </div>
-                            <input type="range" id="bassReleaseSlider" min="20" max="94" step="1" value="65" class="w-full">
-                        </div>
-
-                        <div class="space-y-1">
-                            <div class="flex justify-between text-xs">
-                                <span class="text-purple-200/80">Sub-Bass Blur Kick</span>
-                                <span id="bassBlurKickVal" class="font-mono-code text-purple-300">1.5px</span>
-                            </div>
-                            <input type="range" id="bassBlurKickSlider" min="0" max="60" step="2" value="15" class="w-full">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Typography Sliders -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-[#231c35]">
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-xs">
-                            <span class="text-purple-200/80">Font Size</span>
-                            <span id="fontSizeVal" class="font-mono-code text-purple-300/60">Auto</span>
-                        </div>
-                        <input type="range" id="fontSizeSlider" min="42" max="280" value="130" class="w-full">
-                    </div>
-
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-xs">
-                            <span class="text-purple-200/80">Condense Width</span>
-                            <span id="condenseVal" class="font-mono-code text-purple-300/60">76%</span>
-                        </div>
-                        <input type="range" id="condenseSlider" min="50" max="105" value="76" class="w-full">
-                    </div>
-
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-xs">
-                            <span class="text-purple-200/80">Line Height</span>
-                            <span id="lineHeightVal" class="font-mono-code text-purple-300/60">1.08</span>
-                        </div>
-                        <input type="range" id="lineHeightSlider" min="80" max="145" value="108" class="w-full">
-                    </div>
-
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-xs">
-                            <span class="text-purple-200/80">Padding</span>
-                            <span id="paddingVal" class="font-mono-code text-purple-300/60">54px</span>
-                        </div>
-                        <input type="range" id="paddingSlider" min="16" max="180" value="54" class="w-full">
-                    </div>
-
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-xs">
-                            <span class="text-purple-200/80">Blur</span>
-                            <span id="blurVal" class="font-mono-code text-purple-300/60">1.3px</span>
-                        </div>
-                        <input type="range" id="blurSlider" min="0" max="55" value="13" class="w-full">
-                    </div>
-
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-xs">
-                            <span class="text-purple-200/80">JPEG Crunch</span>
-                            <span id="crunchVal" class="font-mono-code text-purple-300/60">24%</span>
-                        </div>
-                        <input type="range" id="crunchSlider" min="0" max="75" value="24" class="w-full">
-                    </div>
-                </div>
-            </section>
+                <!-- Row 4: Horizontal Pan Scrubber -->
+                <input type="range" id="waveformPanSlider" min="0" max="1000" step="1" value="0" disabled class="nle-slider w-full disabled:opacity-30">
+            </div>
 
         </div>
-    </main>
+    </div>
 
     <!-- Video Export Modal -->
     <div id="exportModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
-        <div class="bg-[#110d1a] border border-[#231c35] rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+        <div class="bg-[#181b22] border border-[#292e3b] rounded-lg max-w-md w-full p-5 space-y-4 shadow-2xl">
             <div class="flex items-center justify-between">
                 <h3 class="font-semibold text-sm text-white">Rendering Video</h3>
-                <span id="exportPercentLabel" class="font-mono-code text-xs font-bold text-purple-300">0%</span>
+                <span id="exportPercentLabel" class="font-mono-code text-xs font-bold text-[#3b82f6]">0%</span>
             </div>
-            <p class="text-xs text-purple-200/60 leading-relaxed">
+            <p class="text-xs text-[#8b95a5] leading-relaxed">
                 Recording canvas graphics with your audio track. Wait for completion or click Save Now to finish early.
             </p>
-            <div class="w-full h-2 bg-[#09070f] rounded-full overflow-hidden border border-[#231c35]">
-                <div id="exportProgressBar" class="h-full bg-[#a855f7] w-0 transition-all duration-150"></div>
+            <div class="w-full h-2 bg-[#12141a] rounded-full overflow-hidden border border-[#292e3b]">
+                <div id="exportProgressBar" class="h-full bg-[#3b82f6] w-0 transition-all duration-150"></div>
             </div>
             <div class="flex items-center justify-end gap-2 pt-2">
-                <button id="cancelExportBtn" class="px-3 py-1.5 rounded-lg bg-[#09070f] hover:bg-[#1a1428] text-purple-200 text-xs border border-[#231c35] transition">Cancel</button>
-                <button id="stopAndSaveExportBtn" class="px-3.5 py-1.5 rounded-lg bg-[#a855f7] hover:bg-[#9333ea] text-white text-xs font-semibold transition">Save Now</button>
+                <button id="cancelExportBtn" class="px-3 py-1.5 rounded bg-[#222631] hover:bg-[#2c3240] text-[#d1d5db] text-xs border border-[#292e3b] transition">Cancel</button>
+                <button id="stopAndSaveExportBtn" class="px-3.5 py-1.5 rounded bg-[#3b82f6] hover:bg-[#2563eb] text-white text-xs font-semibold transition">Save Now</button>
             </div>
         </div>
     </div>
@@ -650,7 +673,7 @@
     <audio id="audioPlayer" crossorigin="anonymous" loop></audio>
 
     <script>
-        const STORAGE_KEY = 'brat_lyric_studio_minimal_purple_v5';
+        const STORAGE_KEY = 'brat_lyric_studio_clean_nle_v7';
         let cues = [];
         let syncPointerIndex = 0;
         let currentAlign = 'brat-distributed';
@@ -664,9 +687,24 @@
         let waveformZoom = 1.0;
         let waveformViewStartRatio = 0.0;
         let showSpectrumOverlay = true;
+        let draggingCueIdx = -1;
+        let hoveredCueIdx = -1;
+        let isScrubbingWaveform = false;
+        let isPanningWaveform = false;
+        let panDragStartX = 0;
+        let panStartRatio = 0;
 
-        /* Sub-Bass Reactor Envelope State */
+        /* Upgraded Spring-Damped Sub-Bass Reactor State */
         let smoothedBassPulse = 0;
+        let bassVelocity = 0;
+        let previousRawSubRms = 0;
+        let manualTestBassImpulse = 0;
+
+        /* Low-Power Dirty-Flag & Cached Layout State */
+        let needsRender = true;
+        let cachedLayoutKey = '';
+        let cachedFontSize = 120;
+        let cachedWrappedLines = [];
 
         const canvas = document.getElementById('bratCanvas');
         const ctx = canvas.getContext('2d');
@@ -697,6 +735,8 @@
         const bassGainSlider = document.getElementById('bassGainSlider');
         const bassThresholdSlider = document.getElementById('bassThresholdSlider');
         const bassIntensitySlider = document.getElementById('bassIntensitySlider');
+        const bassSnapSlider = document.getElementById('bassSnapSlider');
+        const bassChromaSlider = document.getElementById('bassChromaSlider');
         const bassReleaseSlider = document.getElementById('bassReleaseSlider');
         const bassBlurKickSlider = document.getElementById('bassBlurKickSlider');
 
@@ -721,6 +761,30 @@
         const latencyOffsetSlider = document.getElementById('latencyOffsetSlider');
         const latencyOffsetLabel = document.getElementById('latencyOffsetLabel');
 
+        function syncSliderFill(slider) {
+            const min = parseFloat(slider.min) || 0;
+            const max = parseFloat(slider.max) || 100;
+            const val = parseFloat(slider.value) || 0;
+            const pct = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
+            slider.style.setProperty('--val', `${pct}%`);
+        }
+
+        function syncAllSliderFills() {
+            document.querySelectorAll('input[type="range"].nle-slider').forEach(syncSliderFill);
+        }
+
+        document.querySelectorAll('input[type="range"].nle-slider').forEach(sl => {
+            syncSliderFill(sl);
+            sl.addEventListener('input', () => {
+                syncSliderFill(sl);
+                requestRedraw();
+            });
+        });
+
+        function requestRedraw() {
+            needsRender = true;
+        }
+
         let toastTimer = null;
         function showToast(msg) {
             const banner = document.getElementById('toastBanner');
@@ -731,7 +795,7 @@
             toastTimer = setTimeout(() => {
                 banner.classList.add('hidden');
                 banner.classList.remove('flex');
-            }, 2400);
+            }, 2200);
         }
 
         function formatTimePrecise(sec) {
@@ -763,6 +827,8 @@
                         gain: bassGainSlider.value,
                         threshold: bassThresholdSlider.value,
                         intensity: bassIntensitySlider.value,
+                        snap: bassSnapSlider.value,
+                        chroma: bassChromaSlider.value,
                         release: bassReleaseSlider.value,
                         blurKick: bassBlurKickSlider.value
                     }
@@ -790,6 +856,8 @@
                     if (data.bassSettings.gain) bassGainSlider.value = data.bassSettings.gain;
                     if (data.bassSettings.threshold) bassThresholdSlider.value = data.bassSettings.threshold;
                     if (data.bassSettings.intensity) bassIntensitySlider.value = data.bassSettings.intensity;
+                    if (data.bassSettings.snap !== undefined) bassSnapSlider.value = data.bassSettings.snap;
+                    if (data.bassSettings.chroma !== undefined) bassChromaSlider.value = data.bassSettings.chroma;
                     if (data.bassSettings.release) bassReleaseSlider.value = data.bassSettings.release;
                     if (data.bassSettings.blurKick !== undefined) bassBlurKickSlider.value = data.bassSettings.blurKick;
                     updateBassUIReadouts();
@@ -802,12 +870,14 @@
             syncPointerIndex = 0;
             document.getElementById('rawLyricsInput').value = '';
             localStorage.removeItem(STORAGE_KEY);
+            cachedLayoutKey = '';
             refreshAllSyncViews();
             switchToTab('lyricsSetupTab');
+            requestRedraw();
             showToast('Project reset');
         });
 
-        /* Web Audio Graph with Dedicated Sub-Bass Isolation Filter */
+        /* Web Audio Graph with Cascaded 24dB/oct Low-Pass Sub-Bass Isolation */
         let audioCtx = null;
         let mediaSourceNode = null;
         let fullSpectrumAnalyser = null;
@@ -824,37 +894,33 @@
                 audioCtx = new AudioContextClass();
                 mediaSourceNode = audioCtx.createMediaElementSource(audioPlayer);
 
-                /* Full-range Analyser for live spectrum visual overlay */
                 fullSpectrumAnalyser = audioCtx.createAnalyser();
                 fullSpectrumAnalyser.fftSize = 1024;
                 fullSpectrumAnalyser.smoothingTimeConstant = 0.75;
                 fullFreqData = new Uint8Array(fullSpectrumAnalyser.frequencyBinCount);
 
-                /* Cascaded 24dB/oct Low-Pass Filter specifically for Sub-Bass Isolation */
                 const initialCutoff = parseFloat(bassCutoffSlider.value) || 55;
                 subBassFilter1 = audioCtx.createBiquadFilter();
                 subBassFilter1.type = 'lowpass';
                 subBassFilter1.frequency.value = initialCutoff;
-                subBassFilter1.Q.value = 0.707;
+                subBassFilter1.Q.value = 0.85;
 
                 subBassFilter2 = audioCtx.createBiquadFilter();
                 subBassFilter2.type = 'lowpass';
                 subBassFilter2.frequency.value = initialCutoff;
-                subBassFilter2.Q.value = 0.707;
+                subBassFilter2.Q.value = 0.85;
 
                 subBassAnalyser = audioCtx.createAnalyser();
-                subBassAnalyser.fftSize = 1024;
-                subBassAnalyser.smoothingTimeConstant = 0.2;
+                subBassAnalyser.fftSize = 512;
+                subBassAnalyser.smoothingTimeConstant = 0.15;
                 subTimeDomainData = new Float32Array(subBassAnalyser.fftSize);
 
                 recordDestNode = audioCtx.createMediaStreamDestination();
 
-                /* Main Audio Path -> Speakers & Video Recorder */
                 mediaSourceNode.connect(fullSpectrumAnalyser);
                 fullSpectrumAnalyser.connect(audioCtx.destination);
                 fullSpectrumAnalyser.connect(recordDestNode);
 
-                /* Parallel Isolated Sub-Bass Detection Path (not routed to speakers) */
                 mediaSourceNode.connect(subBassFilter1);
                 subBassFilter1.connect(subBassFilter2);
                 subBassFilter2.connect(subBassAnalyser);
@@ -872,40 +938,70 @@
             }
         }
 
-        /* Compute Isolated Sub-Bass RMS Energy & Gate Envelope */
+        document.getElementById('testBassHitBtn').addEventListener('click', () => {
+            manualTestBassImpulse = 1.0;
+            bassVelocity = 0.45;
+            if (beatFlashToggle.checked) {
+                flashTriggerUntil = performance.now() + 85;
+            }
+            requestRedraw();
+        });
+
+        /* Upgraded Transient Flux + Spring-Damped Sub-Bass Detector */
         function computeSubBassPulseState() {
-            const gain = parseFloat(bassGainSlider.value);
-            const thresholdPct = parseInt(bassThresholdSlider.value, 10);
+            const gain = parseFloat(bassGainSlider.value) || 1.75;
+            const thresholdPct = parseInt(bassThresholdSlider.value, 10) || 38;
             const thresholdNorm = thresholdPct / 100;
-            const releaseFactor = parseInt(bassReleaseSlider.value, 10) / 100;
+            const snapBoost = (parseInt(bassSnapSlider.value, 10) || 75) / 100;
+            const releaseFactor = (parseInt(bassReleaseSlider.value, 10) || 62) / 100;
 
             let rawSubLevel = 0;
 
             if (subBassAnalyser && subTimeDomainData && !audioPlayer.paused) {
                 subBassAnalyser.getFloatTimeDomainData(subTimeDomainData);
                 let sumSquares = 0;
+                let peakSample = 0;
                 const len = subTimeDomainData.length;
-                for (let i = 0; i < len; i++) {
-                    const sample = subTimeDomainData[i];
+                for (let i = 0; i < len; i += 2) {
+                    const sample = Math.abs(subTimeDomainData[i]);
                     sumSquares += sample * sample;
+                    if (sample > peakSample) peakSample = sample;
                 }
-                const rms = Math.sqrt(sumSquares / len);
-                rawSubLevel = Math.min(1.0, rms * 3.6 * gain);
+                const rms = Math.sqrt(sumSquares / (len / 2));
+                const hybrid = rms * 0.65 + peakSample * 0.35;
+                rawSubLevel = Math.min(1.0, hybrid * 3.1 * gain);
             }
+
+            if (manualTestBassImpulse > 0.005) {
+                rawSubLevel = Math.max(rawSubLevel, manualTestBassImpulse);
+                manualTestBassImpulse *= 0.84;
+            } else {
+                manualTestBassImpulse = 0;
+            }
+
+            const positiveFlux = Math.max(0, rawSubLevel - previousRawSubRms);
+            previousRawSubRms = rawSubLevel * 0.7 + previousRawSubRms * 0.3;
 
             let gatedTarget = 0;
             if (rawSubLevel > thresholdNorm) {
-                gatedTarget = Math.min(1.0, (rawSubLevel - thresholdNorm) / Math.max(0.05, 1.0 - thresholdNorm));
+                const overGate = (rawSubLevel - thresholdNorm) / Math.max(0.05, 1.0 - thresholdNorm);
+                gatedTarget = Math.min(1.25, Math.pow(overGate, 0.8) + positiveFlux * 2.3 * snapBoost);
             }
 
             if (gatedTarget > smoothedBassPulse) {
-                smoothedBassPulse = smoothedBassPulse * 0.25 + gatedTarget * 0.75;
+                const attackRate = 0.55 + snapBoost * 0.38;
+                smoothedBassPulse = smoothedBassPulse + (gatedTarget - smoothedBassPulse) * attackRate;
+                bassVelocity = positiveFlux * 0.8;
             } else {
-                smoothedBassPulse = smoothedBassPulse * releaseFactor;
-                if (smoothedBassPulse < 0.005) smoothedBassPulse = 0;
+                smoothedBassPulse = (smoothedBassPulse + bassVelocity) * releaseFactor;
+                bassVelocity *= 0.55;
+                if (smoothedBassPulse < 0.004) {
+                    smoothedBassPulse = 0;
+                    bassVelocity = 0;
+                }
             }
 
-            const pctWidth = Math.round(rawSubLevel * 100);
+            const pctWidth = Math.min(100, Math.round(rawSubLevel * 100));
             const isTriggered = gatedTarget > 0.02;
 
             const quickFill = document.getElementById('quickSubMeterFill');
@@ -915,20 +1011,20 @@
 
             if (quickFill) {
                 quickFill.style.width = `${pctWidth}%`;
-                quickFill.style.backgroundColor = isTriggered ? '#e879f9' : '#6b21a8';
+                quickFill.style.backgroundColor = isTriggered ? '#60a5fa' : '#3b82f6';
             }
             if (styleFill) {
                 styleFill.style.width = `${pctWidth}%`;
-                styleFill.style.backgroundColor = isTriggered ? '#e879f9' : '#6b21a8';
+                styleFill.style.backgroundColor = isTriggered ? '#60a5fa' : '#3b82f6';
             }
             if (statusEl) {
-                statusEl.textContent = isTriggered ? 'PULSE HIT' : 'GATED';
+                statusEl.textContent = isTriggered ? 'HIT' : 'IDLE';
                 statusEl.className = isTriggered
-                    ? 'text-[10px] font-mono-code uppercase text-purple-300 font-bold'
-                    : 'text-[10px] font-mono-code uppercase text-purple-300/40';
+                    ? 'text-[10px] font-mono-code text-[#60a5fa] font-bold w-10 text-right'
+                    : 'text-[10px] font-mono-code text-[#8b95a5] w-10 text-right';
             }
             if (readoutEl) {
-                readoutEl.textContent = `Sub: ${pctWidth}% | Gate: ${thresholdPct}%`;
+                readoutEl.textContent = `${pctWidth}% | Gate: ${thresholdPct}%`;
             }
 
             return audioReactiveToggle.checked ? smoothedBassPulse : 0;
@@ -939,14 +1035,18 @@
             const gain = parseFloat(bassGainSlider.value).toFixed(2);
             const thresh = parseInt(bassThresholdSlider.value, 10);
             const intensity = parseInt(bassIntensitySlider.value, 10);
+            const snap = parseInt(bassSnapSlider.value, 10);
+            const chroma = parseInt(bassChromaSlider.value, 10);
             const release = parseInt(bassReleaseSlider.value, 10);
             const blurKick = (parseInt(bassBlurKickSlider.value, 10) / 10).toFixed(1);
 
             document.getElementById('bassCutoffVal').textContent = `${hz} Hz`;
-            document.getElementById('subBassFreqBadge').textContent = `LP ${hz} Hz`;
+            document.getElementById('subBassFreqBadge').textContent = `LP ${hz}Hz`;
             document.getElementById('bassGainVal').textContent = `${gain}x`;
             document.getElementById('bassThresholdVal').textContent = `${thresh}%`;
             document.getElementById('bassIntensityVal').textContent = `${intensity}%`;
+            document.getElementById('bassSnapVal').textContent = `${snap}%`;
+            document.getElementById('bassChromaVal').textContent = `${chroma}px`;
             document.getElementById('bassReleaseVal').textContent = `${release}%`;
             document.getElementById('bassBlurKickVal').textContent = `${blurKick}px`;
 
@@ -954,12 +1054,14 @@
             document.getElementById('styleSubThresholdLine').style.left = `${thresh}%`;
 
             updateSubBassFilterCutoff();
+            syncAllSliderFills();
         }
 
-        [bassCutoffSlider, bassGainSlider, bassThresholdSlider, bassIntensitySlider, bassReleaseSlider, bassBlurKickSlider].forEach(sl => {
+        [bassCutoffSlider, bassGainSlider, bassThresholdSlider, bassIntensitySlider, bassSnapSlider, bassChromaSlider, bassReleaseSlider, bassBlurKickSlider].forEach(sl => {
             sl.addEventListener('input', () => {
                 updateBassUIReadouts();
                 saveProjectToLocalStorage();
+                requestRedraw();
             });
         });
 
@@ -969,6 +1071,7 @@
             bassThresholdSlider.value = pct;
             updateBassUIReadouts();
             saveProjectToLocalStorage();
+            requestRedraw();
         }
 
         document.getElementById('quickSubMeterTrack').addEventListener('mousedown', (e) => {
@@ -987,25 +1090,23 @@
             btn.addEventListener('click', () => {
                 const mode = btn.getAttribute('data-bassmode');
                 document.querySelectorAll('.bass-preset-btn').forEach(b => {
-                    b.className = 'bass-preset-btn px-2.5 py-1 rounded text-[11px] font-medium text-purple-200/60 hover:text-white transition';
+                    b.className = 'bass-preset-btn py-1 rounded text-[11px] font-medium text-[#8b95a5] hover:text-white transition';
                 });
-                btn.className = 'bass-preset-btn px-2.5 py-1 rounded text-[11px] font-medium bg-[#a855f7] text-white transition';
+                btn.className = 'bass-preset-btn py-1 rounded text-[11px] font-medium bg-[#3b82f6] text-white transition';
 
-                if (mode === 'sub') {
-                    bassCutoffSlider.value = 55;
-                } else if (mode === 'kick') {
-                    bassCutoffSlider.value = 95;
-                } else if (mode === 'full') {
-                    bassCutoffSlider.value = 150;
-                }
+                if (mode === 'sub') bassCutoffSlider.value = 55;
+                else if (mode === 'kick') bassCutoffSlider.value = 95;
+                else if (mode === 'full') bassCutoffSlider.value = 150;
                 updateBassUIReadouts();
                 saveProjectToLocalStorage();
+                requestRedraw();
             });
         });
 
         toggleSpectrumOverlayBtn.addEventListener('click', () => {
             showSpectrumOverlay = !showSpectrumOverlay;
             toggleSpectrumOverlayBtn.textContent = `FFT Overlay: ${showSpectrumOverlay ? 'On' : 'Off'}`;
+            requestRedraw();
         });
 
         async function loadUserAudioFile(file) {
@@ -1047,6 +1148,7 @@
             } catch (err) {
                 waveformPeaks = Array.from({ length: 1200 }, (_, i) => 0.25 + 0.5 * Math.abs(Math.sin(i * 0.15)));
             }
+            requestRedraw();
         }
 
         document.getElementById('audioUploadInput').addEventListener('change', (e) => {
@@ -1071,6 +1173,7 @@
             }
         });
 
+        /* Original Single Waveform Zoom, Pan & Draggable Lyric Pins */
         function setWaveformZoom(newZoom, anchorRatio = null) {
             const clampedZoom = Math.max(1.0, Math.min(32.0, newZoom));
             const oldVisibleSpan = 1.0 / waveformZoom;
@@ -1084,6 +1187,7 @@
 
             waveformZoom = clampedZoom;
             waveformZoomSlider.value = waveformZoom;
+            syncSliderFill(waveformZoomSlider);
             document.getElementById('zoomResetBtn').textContent = `${waveformZoom.toFixed(1)}x`;
 
             const maxStart = Math.max(0, 1.0 - newVisibleSpan);
@@ -1095,6 +1199,8 @@
             } else {
                 waveformPanSlider.value = 0;
             }
+            syncSliderFill(waveformPanSlider);
+            requestRedraw();
         }
 
         waveformZoomSlider.addEventListener('input', () => {
@@ -1118,14 +1224,11 @@
             const maxStart = Math.max(0, 1.0 - visibleSpan);
             waveformViewStartRatio = (parseFloat(waveformPanSlider.value) / 1000) * maxStart;
             autoFollowToggle.checked = false;
+            requestRedraw();
         });
 
         const waveformClickArea = document.getElementById('waveformClickArea');
         const waveformHoverLabel = document.getElementById('waveformHoverLabel');
-        let isPanningWaveform = false;
-        let panDragStartX = 0;
-        let panStartRatio = 0;
-        let hoveredCueIdx = -1;
 
         function getWaveformTimeFromEvent(e) {
             const rect = waveformClickArea.getBoundingClientRect();
@@ -1194,6 +1297,7 @@
                 isScrubbingWaveform = true;
                 audioPlayer.currentTime = info.time;
                 currentTimeLabel.textContent = formatTimePrecise(audioPlayer.currentTime);
+                requestRedraw();
             }
         });
 
@@ -1208,27 +1312,35 @@
                 waveformViewStartRatio = Math.max(0, Math.min(maxStart, panStartRatio - (deltaX / rect.width) * visibleSpan));
                 if (maxStart > 0) {
                     waveformPanSlider.value = Math.round((waveformViewStartRatio / maxStart) * 1000);
+                    syncSliderFill(waveformPanSlider);
                 }
+                requestRedraw();
                 return;
             }
 
             if (draggingCueIdx !== -1 && cues[draggingCueIdx]) {
                 const info = getWaveformTimeFromEvent(e);
                 cues[draggingCueIdx].start = parseFloat(info.time.toFixed(2));
+                if (draggingCueIdx > 0 && cues[draggingCueIdx - 1].start !== null) {
+                    cues[draggingCueIdx - 1].end = cues[draggingCueIdx].start;
+                }
                 waveformHoverLabel.textContent = `#${draggingCueIdx + 1} "${cues[draggingCueIdx].text}" ${cues[draggingCueIdx].start.toFixed(2)}s`;
                 refreshAllSyncViews();
+                requestRedraw();
                 return;
             }
             if (isScrubbingWaveform) {
                 const info = getWaveformTimeFromEvent(e);
                 audioPlayer.currentTime = info.time;
                 currentTimeLabel.textContent = formatTimePrecise(audioPlayer.currentTime);
+                requestRedraw();
             }
         });
 
         waveformClickArea.addEventListener('mousemove', (e) => {
             if (draggingCueIdx !== -1 || isScrubbingWaveform || isPanningWaveform) return;
             const info = getWaveformTimeFromEvent(e);
+            const prevHover = hoveredCueIdx;
             hoveredCueIdx = findCuePinNearX(info.xPx);
             if (hoveredCueIdx !== -1 && cues[hoveredCueIdx]) {
                 const c = cues[hoveredCueIdx];
@@ -1236,11 +1348,13 @@
             } else {
                 waveformHoverLabel.textContent = hasAudioLoaded ? formatTimePrecise(info.time) : '00:00.00';
             }
+            if (prevHover !== hoveredCueIdx) requestRedraw();
         });
 
         waveformClickArea.addEventListener('mouseleave', () => {
-            if (draggingCueIdx === -1) {
+            if (draggingCueIdx === -1 && hoveredCueIdx !== -1) {
                 hoveredCueIdx = -1;
+                requestRedraw();
             }
         });
 
@@ -1250,7 +1364,13 @@
             isPanningWaveform = false;
         });
 
+        /* Draw Original Single Waveform + FFT Overlay + Draggable Lyric Pins in Clean Dark Slate NLE Theme */
         function drawWaveformAndCues() {
+            const rect = waveformClickArea.getBoundingClientRect();
+            if (rect.width > 0 && waveformCanvas.width !== Math.round(rect.width)) {
+                waveformCanvas.width = Math.round(rect.width);
+            }
+
             const w = waveformCanvas.width;
             const h = waveformCanvas.height;
             waveCtx.clearRect(0, 0, w, h);
@@ -1267,14 +1387,15 @@
                     waveformViewStartRatio = Math.max(0, Math.min(maxStart, progressRatio - visibleSpan * 0.25));
                     if (maxStart > 0) {
                         waveformPanSlider.value = Math.round((waveformViewStartRatio / maxStart) * 1000);
+                        syncSliderFill(waveformPanSlider);
                     }
                 }
             }
 
             const viewStartSec = dur * waveformViewStartRatio;
             const viewEndSec = dur * Math.min(1.0, waveformViewStartRatio + visibleSpan);
-            viewWindowStartLabel.textContent = `View: ${formatTimePrecise(viewStartSec)}`;
-            viewWindowEndLabel.textContent = `${formatTimePrecise(viewEndSec)} (${waveformZoom.toFixed(1)}x)`;
+            viewWindowStartLabel.textContent = formatTimePrecise(viewStartSec);
+            viewWindowEndLabel.textContent = formatTimePrecise(viewEndSec);
 
             if (showSpectrumOverlay && fullSpectrumAnalyser && fullFreqData && !audioPlayer.paused) {
                 fullSpectrumAnalyser.getByteFrequencyData(fullFreqData);
@@ -1284,17 +1405,17 @@
 
                 for (let b = 0; b < specBins; b++) {
                     const val = fullFreqData[b] / 255;
-                    const barH = val * (h - 28);
+                    const barH = val * (h - 24);
                     const isSubBin = (b / specBins) <= cutoffRatio;
-                    waveCtx.fillStyle = isSubBin ? 'rgba(232, 121, 249, 0.22)' : 'rgba(168, 85, 247, 0.10)';
+                    waveCtx.fillStyle = isSubBin ? 'rgba(96, 165, 250, 0.24)' : 'rgba(59, 130, 246, 0.11)';
                     waveCtx.fillRect(b * binStep, h - barH, Math.max(2, binStep - 2), barH);
                 }
             }
 
             const rulerH = 20;
-            waveCtx.fillStyle = '#0c0814';
+            waveCtx.fillStyle = '#151820';
             waveCtx.fillRect(0, 0, w, rulerH);
-            waveCtx.strokeStyle = '#1e1630';
+            waveCtx.strokeStyle = '#292e3b';
             waveCtx.beginPath();
             waveCtx.moveTo(0, rulerH);
             waveCtx.lineTo(w, rulerH);
@@ -1310,36 +1431,35 @@
                 else if (visibleSec <= 90) tickStep = 5;
 
                 const firstTick = Math.ceil(viewStartSec / tickStep) * tickStep;
-                waveCtx.fillStyle = '#7e6b9e';
                 waveCtx.font = '10px monospace';
                 waveCtx.textAlign = 'center';
 
                 for (let t = firstTick; t <= viewEndSec; t += tickStep) {
                     const tx = timeToCanvasX(t, dur);
-                    waveCtx.strokeStyle = '#191229';
+                    waveCtx.strokeStyle = '#1c202a';
                     waveCtx.beginPath();
                     waveCtx.moveTo(tx, rulerH);
                     waveCtx.lineTo(tx, h);
                     waveCtx.stroke();
 
-                    waveCtx.fillStyle = '#6d5a8f';
+                    waveCtx.fillStyle = '#6e7787';
                     waveCtx.fillRect(tx - 0.5, rulerH - 4, 1, 4);
                     waveCtx.fillText(t.toFixed(tickStep < 1 ? 2 : 0) + 's', tx, 13);
                 }
             }
 
             if (waveformPeaks.length === 0) {
-                waveCtx.fillStyle = '#231c35';
+                waveCtx.fillStyle = '#292e3b';
                 waveCtx.fillRect(0, (h + rulerH) / 2 - 1, w, 2);
                 return;
             }
 
-            const numBarsOnScreen = 180;
+            const numBarsOnScreen = 200;
             const stepPx = w / numBarsOnScreen;
             const barW = Math.max(2, stepPx - 1.4);
             const totalBuckets = waveformPeaks.length;
             const waveCenterY = rulerH + (h - rulerH) / 2;
-            const maxWaveH = h - rulerH - 16;
+            const maxWaveH = h - rulerH - 14;
 
             for (let i = 0; i < numBarsOnScreen; i++) {
                 const sliceStartRatio = waveformViewStartRatio + (i / numBarsOnScreen) * visibleSpan;
@@ -1358,10 +1478,11 @@
                 const y = waveCenterY - barH / 2;
 
                 const isPlayed = sliceStartRatio <= progressRatio;
-                waveCtx.fillStyle = isPlayed ? '#a855f7' : '#2a2040';
+                waveCtx.fillStyle = isPlayed ? '#3b82f6' : '#2b3140';
                 waveCtx.fillRect(x, y, barW, barH);
             }
 
+            /* Draggable Lyric Cue Pins */
             if (dur > 0) {
                 waveCtx.font = '10px Inter, sans-serif';
                 waveCtx.textAlign = 'left';
@@ -1372,7 +1493,7 @@
                         if (cx < -20 || cx > w + 20) continue;
 
                         const isHoveredOrDragged = (i === hoveredCueIdx || i === draggingCueIdx);
-                        const pinColor = isHoveredOrDragged ? '#e879f9' : (cues[i].newBlock ? '#FFFFFF' : '#c084fc');
+                        const pinColor = isHoveredOrDragged ? '#93c5fd' : (cues[i].newBlock ? '#ffffff' : '#60a5fa');
 
                         waveCtx.fillStyle = pinColor;
                         waveCtx.fillRect(cx - 0.75, rulerH, 1.5, h - rulerH);
@@ -1381,9 +1502,9 @@
                         waveCtx.arc(cx, rulerH + 6, isHoveredOrDragged ? 5 : 3.5, 0, Math.PI * 2);
                         waveCtx.fill();
 
-                        if (waveformZoom >= 2.5 || isHoveredOrDragged || cues[i].newBlock) {
+                        if (waveformZoom >= 2.2 || isHoveredOrDragged || cues[i].newBlock) {
                             const labelText = cues[i].isBlank ? '[blank]' : cues[i].text.slice(0, 12);
-                            waveCtx.fillStyle = 'rgba(9, 7, 15, 0.82)';
+                            waveCtx.fillStyle = 'rgba(18, 20, 26, 0.86)';
                             const tw = waveCtx.measureText(labelText).width;
                             waveCtx.fillRect(cx + 4, rulerH + 2, tw + 6, 14);
                             waveCtx.fillStyle = pinColor;
@@ -1417,18 +1538,21 @@
                 audioPlayer.pause();
             }
             updatePlayButtonUI();
+            requestRedraw();
         });
 
         restartAudioBtn.addEventListener('click', () => {
             if (!hasAudioLoaded) return;
             audioPlayer.currentTime = 0;
             currentTimeLabel.textContent = formatTimePrecise(0);
+            requestRedraw();
         });
 
         back2SecBtn.addEventListener('click', () => {
             if (!hasAudioLoaded) return;
             audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 2.0);
             currentTimeLabel.textContent = formatTimePrecise(audioPlayer.currentTime);
+            requestRedraw();
         });
 
         document.getElementById('loopAudioToggle').addEventListener('change', (e) => {
@@ -1437,6 +1561,7 @@
 
         audioPlayer.addEventListener('loadedmetadata', () => {
             durationTimeLabel.textContent = formatTimePrecise(audioPlayer.duration);
+            requestRedraw();
         });
 
         audioPlayer.addEventListener('ended', () => {
@@ -1444,12 +1569,14 @@
             if (isRecordingVideo) {
                 finishVideoRecording();
             }
+            requestRedraw();
         });
 
         audioSeekSlider.addEventListener('input', () => {
             if (hasAudioLoaded && isFinite(audioPlayer.duration) && audioPlayer.duration > 0) {
                 audioPlayer.currentTime = (parseFloat(audioSeekSlider.value) / 100) * audioPlayer.duration;
                 currentTimeLabel.textContent = formatTimePrecise(audioPlayer.currentTime);
+                requestRedraw();
             }
         });
 
@@ -1458,9 +1585,9 @@
                 const spd = parseFloat(btn.getAttribute('data-speed'));
                 audioPlayer.playbackRate = spd;
                 document.querySelectorAll('.speed-btn').forEach(b => {
-                    b.className = 'speed-btn px-2 py-0.5 rounded text-[11px] font-mono-code text-purple-200/60 hover:text-white transition';
+                    b.className = 'speed-btn px-1.5 py-0.5 rounded text-[11px] font-mono-code text-[#8b95a5] hover:text-white transition';
                 });
-                btn.className = 'speed-btn px-2 py-0.5 rounded text-[11px] font-mono-code bg-[#a855f7] text-white transition';
+                btn.className = 'speed-btn px-1.5 py-0.5 rounded text-[11px] font-mono-code bg-[#3b82f6] text-white transition';
             });
         });
 
@@ -1477,10 +1604,13 @@
             document.getElementById(tabId).classList.remove('hidden');
 
             document.querySelectorAll('.studio-tab-btn').forEach(b => {
-                if (b.getAttribute('data-tab') === tabId) {
-                    b.className = 'studio-tab-btn py-2 px-3 rounded-lg text-xs font-semibold bg-[#a855f7] text-white transition flex items-center justify-center gap-1.5';
+                const isMatch = b.getAttribute('data-tab') === tabId;
+                if (b.classList.contains('rail-btn')) {
+                    b.classList.toggle('active', isMatch);
                 } else {
-                    b.className = 'studio-tab-btn py-2 px-3 rounded-lg text-xs font-semibold text-purple-200/70 hover:text-white transition flex items-center justify-center gap-1.5';
+                    b.className = isMatch
+                        ? 'studio-tab-btn py-1.5 px-2 rounded text-[11px] font-semibold bg-[#3b82f6] text-white transition flex items-center justify-center gap-1'
+                        : 'studio-tab-btn py-1.5 px-2 rounded text-[11px] font-semibold text-[#8b95a5] hover:text-white transition flex items-center justify-center gap-1';
                 }
             });
         }
@@ -1548,8 +1678,10 @@
             }
             cues = tokens;
             syncPointerIndex = 0;
+            cachedLayoutKey = '';
             refreshAllSyncViews();
             switchToTab('liveSyncTab');
+            requestRedraw();
             showToast(`Split into ${tokens.length} words`);
         });
 
@@ -1562,8 +1694,10 @@
             }
             cues = tokens;
             syncPointerIndex = 0;
+            cachedLayoutKey = '';
             refreshAllSyncViews();
             switchToTab('liveSyncTab');
+            requestRedraw();
             showToast(`Split into ${tokens.length} lines`);
         });
 
@@ -1586,7 +1720,9 @@
             });
 
             syncPointerIndex = cues.length;
+            cachedLayoutKey = '';
             refreshAllSyncViews();
+            requestRedraw();
             showToast(`Distributed ${cues.length} cues across ${totalDur.toFixed(1)}s`);
         });
 
@@ -1612,9 +1748,8 @@
                 hudNextIndexBadge.textContent = 'STANDBY';
                 hudNextScreenFlag.classList.add('hidden');
                 hudNextTokenText.textContent = 'No lyrics loaded';
-                hudNextTokenText.className = 'text-2xl font-semibold text-purple-300/40 py-2';
                 hudCurrentWallPreview.textContent = '';
-                hudUpcomingQueue.innerHTML = '<span class="text-xs text-purple-300/40">Split lyrics in Tab 1 to populate queue</span>';
+                hudUpcomingQueue.innerHTML = '<span class="text-xs text-[#5a6270]">Split lyrics to populate queue</span>';
                 return;
             }
 
@@ -1636,7 +1771,6 @@
                     hudNextScreenFlag.classList.add('hidden');
                 }
                 hudNextTokenText.textContent = nextCue.text;
-                hudNextTokenText.className = 'text-3xl sm:text-4xl font-bold text-white break-words py-1 select-none font-brat';
 
                 let bStart = syncPointerIndex;
                 while (bStart > 0 && !cues[bStart].newBlock) bStart--;
@@ -1649,26 +1783,26 @@
                 hudNextIndexBadge.textContent = 'COMPLETE';
                 hudNextScreenFlag.classList.add('hidden');
                 hudNextTokenText.textContent = 'All words synced';
-                hudNextTokenText.className = 'text-2xl sm:text-3xl font-bold text-purple-300 py-1 select-none';
                 hudCurrentWallPreview.textContent = '';
             }
 
             hudUpcomingQueue.innerHTML = '';
             const startLook = Math.max(0, syncPointerIndex);
-            const endLook = Math.min(total, startLook + 18);
+            const endLook = Math.min(total, startLook + 16);
 
             for (let i = startLook; i < endLook; i++) {
                 const pill = document.createElement('button');
                 const isCurrentNext = (i === syncPointerIndex);
-                pill.className = `px-2.5 py-1 rounded text-xs font-mono-code shrink-0 border transition ${
+                pill.className = `px-2 py-0.5 rounded text-[11px] font-mono-code shrink-0 border transition ${
                     isCurrentNext
-                        ? 'bg-[#a855f7] text-white font-semibold border-purple-300'
-                        : 'bg-[#110d1a] text-purple-200/70 border-[#231c35] hover:border-purple-500'
+                        ? 'bg-[#3b82f6] text-white font-semibold border-[#60a5fa]'
+                        : 'bg-[#181b22] text-[#8b95a5] border-[#292e3b] hover:text-white'
                 }`;
                 pill.textContent = cues[i].newBlock ? `[New] ${cues[i].text}` : cues[i].text;
                 pill.addEventListener('click', () => {
                     syncPointerIndex = i;
                     refreshAllSyncViews();
+                    requestRedraw();
                 });
                 hudUpcomingQueue.appendChild(pill);
             }
@@ -1676,7 +1810,7 @@
 
         function stampNextToken(forceNewScreen = false) {
             if (cues.length === 0) {
-                showToast('Add lyrics in Tab 1 first');
+                showToast('Add lyrics first');
                 switchToTab('lyricsSetupTab');
                 return;
             }
@@ -1715,7 +1849,9 @@
             }
 
             syncPointerIndex++;
+            cachedLayoutKey = '';
             refreshAllSyncViews();
+            requestRedraw();
         }
 
         function undoLastStamp() {
@@ -1733,7 +1869,9 @@
                 currentTimeLabel.textContent = formatTimePrecise(targetTime);
             }
 
+            cachedLayoutKey = '';
             refreshAllSyncViews();
+            requestRedraw();
         }
 
         function insertBlankBeatNow() {
@@ -1752,7 +1890,9 @@
                 isBlank: true
             });
             syncPointerIndex++;
+            cachedLayoutKey = '';
             refreshAllSyncViews();
+            requestRedraw();
         }
 
         document.getElementById('startTapSyncBtn').addEventListener('click', () => {
@@ -1761,7 +1901,7 @@
                 return;
             }
             if (cues.length === 0) {
-                showToast('Split lyrics in Tab 1 first');
+                showToast('Split lyrics first');
                 switchToTab('lyricsSetupTab');
                 return;
             }
@@ -1770,6 +1910,7 @@
                 audioPlayer.play();
                 updatePlayButtonUI();
             }
+            requestRedraw();
         });
 
         document.getElementById('tapSpaceBtn').addEventListener('click', () => stampNextToken(false));
@@ -1784,6 +1925,7 @@
                 currentTimeLabel.textContent = formatTimePrecise(0);
             }
             refreshAllSyncViews();
+            requestRedraw();
         });
 
         document.getElementById('clearAllTimestampsBtn').addEventListener('click', () => {
@@ -1792,7 +1934,9 @@
                 c.end = null;
             });
             syncPointerIndex = 0;
+            cachedLayoutKey = '';
             refreshAllSyncViews();
+            requestRedraw();
         });
 
         window.addEventListener('keydown', (e) => {
@@ -1822,8 +1966,8 @@
 
             if (cues.length === 0) {
                 cueListContainer.innerHTML = `
-                    <div class="p-8 text-center rounded-lg border border-[#231c35] text-purple-300/40 text-xs">
-                        No cues yet. Split your lyrics in Tab 1.
+                    <div class="p-6 text-center rounded border border-[#292e3b] text-[#8b95a5] text-xs">
+                        No cues yet. Split your lyrics in the Lyrics tab.
                     </div>
                 `;
                 return;
@@ -1835,44 +1979,39 @@
 
                 const row = document.createElement('div');
                 row.id = `cue-row-${index}`;
-                row.className = `grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-2 rounded-lg border transition ${
-                    isNextUp ? 'cue-next-up bg-[#161124]' : 'border-[#231c35] bg-[#09070f]'
+                row.className = `p-2 rounded border space-y-1.5 transition ${
+                    isNextUp ? 'cue-next-up bg-[#1c212b]' : 'border-[#292e3b] bg-[#12141a]'
                 }`;
 
                 row.innerHTML = `
-                    <div class="sm:col-span-1">
-                        <button data-act="arm-pointer" data-idx="${index}" class="text-[11px] font-mono-code px-2 py-1 rounded ${
-                            isNextUp ? 'bg-[#a855f7] text-white font-semibold' : isSynced ? 'text-purple-300' : 'text-purple-300/40'
-                        }">
-                            #${index + 1}
-                        </button>
+                    <div class="flex items-center justify-between gap-1.5">
+                        <div class="flex items-center gap-1">
+                            <button data-act="arm-pointer" data-idx="${index}" class="text-[10px] font-mono-code px-1.5 py-0.5 rounded ${
+                                isNextUp ? 'bg-[#3b82f6] text-white font-semibold' : isSynced ? 'text-[#60a5fa]' : 'text-[#8b95a5]'
+                            }">
+                                #${index + 1}
+                            </button>
+                            <button data-act="seek-cue" data-idx="${index}" class="px-1.5 py-0.5 rounded bg-[#222631] hover:bg-[#2c3240] text-[#d1d5db] text-[10px] border border-[#292e3b]">Seek</button>
+                            <input type="number" step="0.05" min="0" placeholder="-" value="${cue.start !== null ? cue.start.toFixed(2) : ''}" data-act="start-input" data-idx="${index}"
+                                class="w-16 bg-[#222631] border border-[#292e3b] rounded px-1.5 py-0.5 text-[11px] font-mono-code text-white focus:outline-none focus:border-[#3b82f6]">
+                            <button data-act="nudge-minus" data-idx="${index}" class="px-1 py-0.5 rounded bg-[#222631] hover:bg-[#2c3240] text-[#8b95a5] border border-[#292e3b] text-[10px] font-mono-code">-0.05</button>
+                            <button data-act="nudge-plus" data-idx="${index}" class="px-1 py-0.5 rounded bg-[#222631] hover:bg-[#2c3240] text-[#8b95a5] border border-[#292e3b] text-[10px] font-mono-code">+0.05</button>
+                        </div>
+                        <button data-act="delete-cue" data-idx="${index}" class="px-1.5 py-0.5 rounded bg-[#222631] hover:bg-red-950/50 text-[#8b95a5] hover:text-red-300 border border-[#292e3b] text-[10px]">Del</button>
                     </div>
 
-                    <div class="sm:col-span-4 flex items-center gap-1">
-                        <button data-act="seek-cue" data-idx="${index}" class="px-2 py-1 rounded bg-[#110d1a] hover:bg-[#1a1428] text-purple-200 text-[11px] border border-[#231c35]">Seek</button>
-                        <input type="number" step="0.05" min="0" placeholder="-" value="${cue.start !== null ? cue.start.toFixed(2) : ''}" data-act="start-input" data-idx="${index}"
-                            class="w-20 bg-[#110d1a] border border-[#231c35] rounded px-2 py-1 text-xs font-mono-code text-white focus:outline-none focus:border-[#a855f7]">
-                        <button data-act="nudge-minus" data-idx="${index}" class="px-1.5 py-1 rounded bg-[#110d1a] hover:bg-[#1a1428] text-purple-300/70 border border-[#231c35] text-[10px] font-mono-code">-0.05</button>
-                        <button data-act="nudge-plus" data-idx="${index}" class="px-1.5 py-1 rounded bg-[#110d1a] hover:bg-[#1a1428] text-purple-300/70 border border-[#231c35] text-[10px] font-mono-code">+0.05</button>
-                    </div>
-
-                    <div class="sm:col-span-3">
+                    <div class="flex items-center gap-1.5">
                         <input type="text" value="${cue.text.replace(/"/g, '&quot;')}" data-act="text-input" data-idx="${index}"
                             placeholder="(blank)"
-                            class="w-full bg-[#110d1a] border border-[#231c35] rounded px-2.5 py-1 text-xs text-white focus:outline-none focus:border-[#a855f7]">
-                    </div>
-
-                    <div class="sm:col-span-4 flex items-center justify-end gap-1.5">
+                            class="flex-1 min-w-0 bg-[#222631] border border-[#292e3b] rounded px-2 py-0.5 text-xs text-white focus:outline-none focus:border-[#3b82f6]">
                         <button data-act="toggle-newblock" data-idx="${index}"
-                            class="text-[11px] px-2 py-1 rounded border transition ${
-                                cue.newBlock ? 'bg-[#a855f7]/20 border-[#a855f7] text-purple-200' : 'bg-[#110d1a] border-[#231c35] text-purple-300/50 hover:text-purple-200'
-                            }">New Screen</button>
+                            class="text-[10px] px-2 py-0.5 rounded border transition ${
+                                cue.newBlock ? 'bg-[#3b82f6]/20 border-[#3b82f6] text-[#60a5fa]' : 'bg-[#222631] border-[#292e3b] text-[#8b95a5]'
+                            }">Screen</button>
                         <button data-act="toggle-invert" data-idx="${index}"
-                            class="text-[11px] px-2 py-1 rounded border transition ${
-                                cue.invert ? 'bg-white text-black border-white' : 'bg-[#110d1a] border-[#231c35] text-purple-300/50 hover:text-purple-200'
+                            class="text-[10px] px-2 py-0.5 rounded border transition ${
+                                cue.invert ? 'bg-white text-black border-white' : 'bg-[#222631] border-[#292e3b] text-[#8b95a5]'
                             }">Invert</button>
-                        <button data-act="delete-cue" data-idx="${index}"
-                            class="px-2 py-1 rounded bg-[#110d1a] hover:bg-red-950/50 text-purple-300/50 hover:text-red-300 border border-[#231c35] text-[11px] transition">Delete</button>
                     </div>
                 `;
                 cueListContainer.appendChild(row);
@@ -1896,12 +2035,16 @@
                 if (cues[idx].start !== null && idx > 0 && cues[idx - 1].start !== null) {
                     cues[idx - 1].end = cues[idx].start;
                 }
+                cachedLayoutKey = '';
                 updateTeleprompterHUD();
                 saveProjectToLocalStorage();
+                requestRedraw();
             } else if (act === 'text-input') {
                 cues[idx].text = e.target.value;
+                cachedLayoutKey = '';
                 updateTeleprompterHUD();
                 saveProjectToLocalStorage();
+                requestRedraw();
             }
         });
 
@@ -1915,31 +2058,40 @@
             if (act === 'arm-pointer') {
                 syncPointerIndex = idx;
                 refreshAllSyncViews();
+                requestRedraw();
             } else if (act === 'seek-cue') {
                 if (cues[idx].start !== null && hasAudioLoaded) {
                     audioPlayer.currentTime = cues[idx].start;
                     currentTimeLabel.textContent = formatTimePrecise(audioPlayer.currentTime);
+                    requestRedraw();
                 }
             } else if (act === 'nudge-minus') {
                 if (cues[idx].start !== null) {
                     cues[idx].start = parseFloat(Math.max(0, cues[idx].start - 0.05).toFixed(2));
                     refreshAllSyncViews();
+                    requestRedraw();
                 }
             } else if (act === 'nudge-plus') {
                 if (cues[idx].start !== null) {
                     cues[idx].start = parseFloat((cues[idx].start + 0.05).toFixed(2));
                     refreshAllSyncViews();
+                    requestRedraw();
                 }
             } else if (act === 'toggle-newblock') {
                 cues[idx].newBlock = !cues[idx].newBlock;
+                cachedLayoutKey = '';
                 refreshAllSyncViews();
+                requestRedraw();
             } else if (act === 'toggle-invert') {
                 cues[idx].invert = !cues[idx].invert;
                 refreshAllSyncViews();
+                requestRedraw();
             } else if (act === 'delete-cue') {
                 cues.splice(idx, 1);
                 if (syncPointerIndex >= cues.length) syncPointerIndex = Math.max(0, cues.length);
+                cachedLayoutKey = '';
                 refreshAllSyncViews();
+                requestRedraw();
             }
         });
 
@@ -1954,7 +2106,9 @@
                 invert: false,
                 isBlank: false
             });
+            cachedLayoutKey = '';
             refreshAllSyncViews();
+            requestRedraw();
         });
 
         function shiftAllSyncedCues(delta) {
@@ -1967,12 +2121,13 @@
                 }
             });
             refreshAllSyncViews();
+            requestRedraw();
         }
 
         document.getElementById('shiftAllMinusBtn').addEventListener('click', () => shiftAllSyncedCues(-0.05));
         document.getElementById('shiftAllPlusBtn').addEventListener('click', () => shiftAllSyncedCues(0.05));
 
-        /* Brat Canvas Rendering Engine */
+        /* Low-Power Cached Text Layout & Video Frame Renderer */
         function wrapTokensIntoLines(context, tokenObjs, maxWidth) {
             const lines = [];
             if (tokenObjs.length === 0) return lines;
@@ -2052,11 +2207,10 @@
             return { activeIdx, visibleTokens, fullBlockTokens, activeCue };
         }
 
-        function renderBratVideoFrame() {
+        function renderBratVideoFrame(bassPulseValue) {
             const W = canvas.width;
             const H = canvas.height;
             const nowTime = audioPlayer.currentTime || 0;
-            const bassPulseValue = computeSubBassPulseState();
 
             const state = getActiveScreenStateAtTime(nowTime);
 
@@ -2115,16 +2269,18 @@
             const scaleFactor = 1 - (crunchPercent * 0.0094);
             const offW = Math.max(180, Math.round(W * scaleFactor));
             const offH = Math.max(180, Math.round(H * scaleFactor));
-            offCanvas.width = offW;
-            offCanvas.height = offH;
+            if (offCanvas.width !== offW || offCanvas.height !== offH) {
+                offCanvas.width = offW;
+                offCanvas.height = offH;
+            }
 
             offCtx.save();
             offCtx.fillStyle = bg;
             offCtx.fillRect(0, 0, offW, offH);
             offCtx.scale(offW / W, offH / H);
 
-            const maxScaleIntensity = (parseInt(bassIntensitySlider.value, 10) || 12) / 100;
-            if (bassPulseValue > 0.01) {
+            const maxScaleIntensity = (parseInt(bassIntensitySlider.value, 10) || 16) / 100;
+            if (bassPulseValue > 0.005) {
                 const bump = 1 + bassPulseValue * maxScaleIntensity;
                 offCtx.translate(W / 2, H / 2);
                 offCtx.scale(bump, bump);
@@ -2140,69 +2296,78 @@
             const fontFamily = '"Arial Narrow", "PT Sans Narrow", Arial, sans-serif';
             const availWidth = (W - pad * 2) / condenseRatio;
             const availHeight = H - pad * 2;
-
-            let fontSize = parseInt(fontSizeSlider.value, 10);
             const mode = animModeSelect.value;
 
             const referenceTokens = (mode === 'cumulative' || mode === 'spotlight')
                 ? state.fullBlockTokens
                 : state.visibleTokens;
 
-            if (isAutoFit && referenceTokens.length > 0) {
-                let low = 34;
-                let high = 280;
-                let best = 120;
-                while (low <= high) {
-                    const mid = Math.floor((low + high) / 2);
-                    offCtx.font = `${fontWeight} ${mid}px ${fontFamily}`;
-                    const testLines = wrapTokensIntoLines(offCtx, referenceTokens, availWidth);
-                    let maxW = 0;
-                    for (const ln of testLines) {
-                        const str = ln.map(t => t.text).join(' ');
-                        const w = offCtx.measureText(str).width;
-                        if (w > maxW) maxW = w;
+            /* Cached Layout Calculation for Low-Power Efficiency */
+            const layoutSignature = `${W}x${H}_${pad}_${condenseRatio}_${lineHeightMult}_${isBold}_${isAutoFit}_${fontSizeSlider.value}_${mode}_${referenceTokens.map(t => t.text).join('|')}_${state.visibleTokens.length}`;
+
+            if (layoutSignature !== cachedLayoutKey) {
+                cachedLayoutKey = layoutSignature;
+                let fontSize = parseInt(fontSizeSlider.value, 10);
+
+                if (isAutoFit && referenceTokens.length > 0) {
+                    let low = 34;
+                    let high = 280;
+                    let best = 120;
+                    while (low <= high) {
+                        const mid = Math.floor((low + high) / 2);
+                        offCtx.font = `${fontWeight} ${mid}px ${fontFamily}`;
+                        const testLines = wrapTokensIntoLines(offCtx, referenceTokens, availWidth);
+                        let maxW = 0;
+                        for (const ln of testLines) {
+                            const str = ln.map(t => t.text).join(' ');
+                            const w = offCtx.measureText(str).width;
+                            if (w > maxW) maxW = w;
+                        }
+                        const totalH = testLines.length * (mid * lineHeightMult);
+                        if (maxW <= availWidth && totalH <= availHeight) {
+                            best = mid;
+                            low = mid + 1;
+                        } else {
+                            high = mid - 1;
+                        }
                     }
-                    const totalH = testLines.length * (mid * lineHeightMult);
-                    if (maxW <= availWidth && totalH <= availHeight) {
-                        best = mid;
-                        low = mid + 1;
-                    } else {
-                        high = mid - 1;
-                    }
+                    fontSize = best;
                 }
-                fontSize = best;
-                document.getElementById('fontSizeVal').textContent = `Auto (${fontSize}px)`;
-            } else {
-                document.getElementById('fontSizeVal').textContent = `${fontSize}px`;
+                cachedFontSize = fontSize;
+                offCtx.font = `${fontWeight} ${cachedFontSize}px ${fontFamily}`;
+                cachedWrappedLines = wrapTokensIntoLines(offCtx, state.visibleTokens, availWidth);
             }
 
+            document.getElementById('fontSizeVal').textContent = isAutoFit ? `Auto` : `${cachedFontSize}px`;
+
             if (state.visibleTokens.length > 0) {
-                offCtx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-                const wrappedLines = wrapTokensIntoLines(offCtx, state.visibleTokens, availWidth);
+                offCtx.font = `${fontWeight} ${cachedFontSize}px ${fontFamily}`;
 
                 const extraBassBlur = bassPulseValue * ((parseInt(bassBlurKickSlider.value, 10) || 0) / 10);
                 const totalBlur = blurAmount + extraBassBlur;
 
-                if (totalBlur > 0) {
+                if (totalBlur > 0.05) {
                     offCtx.filter = `blur(${(totalBlur * (offW / W)).toFixed(2)}px)`;
                 } else {
                     offCtx.filter = 'none';
                 }
 
                 offCtx.textBaseline = 'top';
-                const lineStep = fontSize * lineHeightMult;
-                const totalBlockHeight = wrappedLines.length * lineStep;
+                const lineStep = cachedFontSize * lineHeightMult;
+                const totalBlockHeight = cachedWrappedLines.length * lineStep;
 
                 let startY = pad;
                 if (currentAlign === 'center') {
                     startY = (H - totalBlockHeight) / 2;
                 }
 
+                const chromaPx = bassPulseValue * (parseInt(bassChromaSlider.value, 10) || 0);
+
                 offCtx.save();
                 offCtx.scale(condenseRatio, 1);
 
-                for (let i = 0; i < wrappedLines.length; i++) {
-                    const lineTokens = wrappedLines[i];
+                for (let i = 0; i < cachedWrappedLines.length; i++) {
+                    const lineTokens = cachedWrappedLines[i];
                     const y = startY + i * lineStep;
 
                     if (currentAlign === 'brat-distributed' && lineTokens.length > 1) {
@@ -2212,7 +2377,7 @@
 
                         for (const tk of lineTokens) {
                             const wordW = offCtx.measureText(tk.text).width;
-                            drawSingleToken(offCtx, tk, curX, y, fg, mode);
+                            drawSingleToken(offCtx, tk, curX, y, fg, mode, chromaPx);
                             curX += wordW + spaceW;
                         }
                     } else if (currentAlign === 'center') {
@@ -2223,7 +2388,7 @@
 
                         for (const tk of lineTokens) {
                             const wordW = offCtx.measureText(tk.text).width;
-                            drawSingleToken(offCtx, tk, curX, y, fg, mode);
+                            drawSingleToken(offCtx, tk, curX, y, fg, mode, chromaPx);
                             curX += wordW + spaceW;
                         }
                     } else {
@@ -2231,7 +2396,7 @@
                         const spaceW = offCtx.measureText(' ').width;
                         for (const tk of lineTokens) {
                             const wordW = offCtx.measureText(tk.text).width;
-                            drawSingleToken(offCtx, tk, curX, y, fg, mode);
+                            drawSingleToken(offCtx, tk, curX, y, fg, mode, chromaPx);
                             curX += wordW + spaceW;
                         }
                     }
@@ -2250,13 +2415,22 @@
             ctx.restore();
         }
 
-        function drawSingleToken(context, tk, x, y, fgColor, mode) {
+        function drawSingleToken(context, tk, x, y, fgColor, mode, chromaOffset) {
             context.save();
-            if (mode === 'spotlight') {
-                context.globalAlpha = tk.isCurrent ? 1.0 : (tk.isRevealed ? 0.38 : 0.14);
-            } else {
-                context.globalAlpha = 1.0;
+            const baseAlpha = mode === 'spotlight'
+                ? (tk.isCurrent ? 1.0 : (tk.isRevealed ? 0.38 : 0.14))
+                : 1.0;
+
+            if (chromaOffset > 0.6) {
+                context.globalAlpha = baseAlpha * 0.48;
+                context.fillStyle = '#3b82f6';
+                context.fillText(tk.text, x - chromaOffset, y);
+
+                context.fillStyle = '#ef4444';
+                context.fillText(tk.text, x + chromaOffset, y);
             }
+
+            context.globalAlpha = baseAlpha;
             context.fillStyle = fgColor;
             context.fillText(tk.text, x, y);
             context.restore();
@@ -2270,26 +2444,28 @@
             btn.addEventListener('click', () => {
                 currentAspectRatio = btn.getAttribute('data-ratio');
                 document.querySelectorAll('.ratio-btn').forEach(b => {
-                    b.className = 'ratio-btn px-2.5 py-1 rounded text-xs font-medium text-purple-200/60 hover:text-white transition';
+                    b.className = 'ratio-btn px-2.5 py-1 rounded text-xs font-medium text-[#8b95a5] hover:text-white transition';
                 });
-                btn.className = 'ratio-btn px-2.5 py-1 rounded text-xs font-medium bg-[#a855f7] text-white transition';
+                btn.className = 'ratio-btn px-2.5 py-1 rounded text-xs font-medium bg-[#3b82f6] text-white transition';
 
                 if (currentAspectRatio === '1:1') {
                     canvas.width = 1080;
                     canvas.height = 1080;
-                    canvasFrame.className = 'aspect-square h-[310px] sm:h-[340px] max-w-full rounded overflow-hidden shadow-lg border border-white/10 relative bg-white transition-all duration-150';
+                    canvasFrame.className = 'aspect-square max-h-[calc(100%-32px)] rounded overflow-hidden shadow-2xl border border-[#292e3b] relative bg-white flex items-center justify-center';
                     canvasResolutionLabel.textContent = '1080x1080';
                 } else if (currentAspectRatio === '9:16') {
                     canvas.width = 1080;
                     canvas.height = 1920;
-                    canvasFrame.className = 'aspect-[9/16] h-[330px] sm:h-[360px] max-w-full rounded overflow-hidden shadow-lg border border-white/10 relative bg-white transition-all duration-150';
+                    canvasFrame.className = 'aspect-[9/16] max-h-[calc(100%-32px)] rounded overflow-hidden shadow-2xl border border-[#292e3b] relative bg-white flex items-center justify-center';
                     canvasResolutionLabel.textContent = '1080x1920';
                 } else if (currentAspectRatio === '16:9') {
                     canvas.width = 1920;
                     canvas.height = 1080;
-                    canvasFrame.className = 'aspect-video w-full max-w-[440px] rounded overflow-hidden shadow-lg border border-white/10 relative bg-white transition-all duration-150';
+                    canvasFrame.className = 'aspect-video max-h-[calc(100%-32px)] max-w-[92%] rounded overflow-hidden shadow-2xl border border-[#292e3b] relative bg-white flex items-center justify-center';
                     canvasResolutionLabel.textContent = '1920x1080';
                 }
+                cachedLayoutKey = '';
+                requestRedraw();
             });
         });
 
@@ -2297,9 +2473,18 @@
             sw.addEventListener('click', () => {
                 bgColorPicker.value = sw.getAttribute('data-bg');
                 fgColorPicker.value = sw.getAttribute('data-fg');
-                document.querySelectorAll('.theme-swatch').forEach(s => s.classList.replace('border-[#a855f7]', 'border-[#231c35]'));
-                sw.classList.replace('border-[#231c35]', 'border-[#a855f7]');
+                document.querySelectorAll('.theme-swatch').forEach(s => s.classList.replace('border-[#3b82f6]', 'border-[#292e3b]'));
+                sw.classList.replace('border-[#292e3b]', 'border-[#3b82f6]');
                 saveProjectToLocalStorage();
+                requestRedraw();
+            });
+        });
+
+        [bgColorPicker, fgColorPicker, animModeSelect, autoFitToggle, forceLowercase, boldToggle, mirrorXToggle, beatFlashToggle, audioReactiveToggle].forEach(el => {
+            el.addEventListener('change', () => {
+                cachedLayoutKey = '';
+                saveProjectToLocalStorage();
+                requestRedraw();
             });
         });
 
@@ -2307,34 +2492,37 @@
             btn.addEventListener('click', () => {
                 currentAlign = btn.getAttribute('data-align');
                 document.querySelectorAll('.align-btn').forEach(b => {
-                    b.className = 'align-btn py-2 px-3 rounded-lg text-xs font-medium border border-[#231c35] bg-[#09070f] text-purple-200/70 hover:text-white transition';
+                    b.className = 'align-btn py-1.5 px-2 rounded text-xs font-medium border border-[#292e3b] bg-[#12141a] text-[#8b95a5] hover:text-white transition';
                 });
-                btn.className = 'align-btn py-2 px-3 rounded-lg text-xs font-medium border border-[#a855f7] bg-[#1a1428] text-white transition';
+                btn.className = 'align-btn py-1.5 px-2 rounded text-xs font-medium border border-[#3b82f6] bg-[#222631] text-white transition';
                 saveProjectToLocalStorage();
+                requestRedraw();
             });
         });
 
         fontSizeSlider.addEventListener('input', () => {
             autoFitToggle.checked = false;
+            cachedLayoutKey = '';
+            requestRedraw();
         });
 
         function cycleCanvasTheme() {
             const cur = bgColorPicker.value.toUpperCase();
             if (cur === '#FFFFFF') {
-                bgColorPicker.value = '#A855F7';
-                fgColorPicker.value = '#000000';
-            } else if (cur === '#A855F7') {
                 bgColorPicker.value = '#8ACF00';
+                fgColorPicker.value = '#000000';
+            } else if (cur === '#8ACF00') {
+                bgColorPicker.value = '#3B82F6';
                 fgColorPicker.value = '#000000';
             } else {
                 bgColorPicker.value = '#FFFFFF';
                 fgColorPicker.value = '#000000';
             }
             saveProjectToLocalStorage();
+            requestRedraw();
         }
 
         canvas.addEventListener('click', cycleCanvasTheme);
-        document.getElementById('brandLogoBox').addEventListener('click', cycleCanvasTheme);
 
         /* Export & Import Handlers */
         document.getElementById('exportLrcBtn').addEventListener('click', () => {
@@ -2347,7 +2535,7 @@
             const blob = new Blob([lrcContent], { type: 'text/plain;charset=utf-8' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = 'brat-lyrics.lrc';
+            link.download = 'lyrics.lrc';
             link.click();
             showToast('Exported LRC file');
         });
@@ -2367,7 +2555,7 @@
             const blob = new Blob([data], { type: 'application/json' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = 'brat-project.json';
+            link.download = 'lyric-project.json';
             link.click();
             showToast('Saved JSON project');
         });
@@ -2384,8 +2572,10 @@
                         cues = obj.cues;
                         syncPointerIndex = cues.findIndex(c => c.start === null);
                         if (syncPointerIndex === -1) syncPointerIndex = cues.length;
+                        cachedLayoutKey = '';
                         refreshAllSyncViews();
                         switchToTab('cueListTab');
+                        requestRedraw();
                         showToast(`Loaded ${cues.length} cues`);
                     }
                 } catch (err) {
@@ -2416,8 +2606,10 @@
                     }
                     cues = parsed;
                     syncPointerIndex = cues.length;
+                    cachedLayoutKey = '';
                     refreshAllSyncViews();
                     switchToTab('cueListTab');
+                    requestRedraw();
                     showToast(`Loaded ${parsed.length} cues from LRC`);
                 }
             }
@@ -2425,7 +2617,7 @@
 
         document.getElementById('snapshotPngBtn').addEventListener('click', () => {
             const link = document.createElement('a');
-            link.download = `brat-frame-${Math.round((audioPlayer.currentTime || 0) * 10)}s.png`;
+            link.download = `frame-${Math.round((audioPlayer.currentTime || 0) * 10)}s.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
             showToast('Saved PNG frame');
@@ -2487,7 +2679,7 @@
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `brat-lyric-video-${currentAspectRatio.replace(':', 'x')}.webm`;
+                    a.download = `lyric-video-${currentAspectRatio.replace(':', 'x')}.webm`;
                     a.click();
                     showToast('Video saved');
                 }
@@ -2545,15 +2737,28 @@
             }
         });
 
+        window.addEventListener('resize', requestRedraw);
+
+        /* Silent Low-Power Event-Driven Loop */
         function studioLoop() {
-            if (hasAudioLoaded && !audioPlayer.paused && !isScrubbingWaveform) {
-                currentTimeLabel.textContent = formatTimePrecise(audioPlayer.currentTime);
-                if (isFinite(audioPlayer.duration) && audioPlayer.duration > 0) {
-                    audioSeekSlider.value = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+            const isPlaying = hasAudioLoaded && !audioPlayer.paused;
+            const hasActiveBass = smoothedBassPulse > 0.004 || manualTestBassImpulse > 0.004;
+            const hasActiveFlash = performance.now() < flashTriggerUntil;
+            const isDragging = isScrubbingWaveform || isPanningWaveform || draggingCueIdx !== -1;
+
+            if (isPlaying || hasActiveBass || hasActiveFlash || isDragging || needsRender) {
+                if (isPlaying && !isScrubbingWaveform) {
+                    currentTimeLabel.textContent = formatTimePrecise(audioPlayer.currentTime);
+                    if (isFinite(audioPlayer.duration) && audioPlayer.duration > 0) {
+                        audioSeekSlider.value = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                        syncSliderFill(audioSeekSlider);
+                    }
                 }
+                const bassVal = computeSubBassPulseState();
+                drawWaveformAndCues();
+                renderBratVideoFrame(bassVal);
+                needsRender = false;
             }
-            drawWaveformAndCues();
-            renderBratVideoFrame();
             requestAnimationFrame(studioLoop);
         }
 
@@ -2561,6 +2766,8 @@
             loadProjectFromLocalStorage();
             updateBassUIReadouts();
             refreshAllSyncViews();
+            syncAllSliderFills();
+            requestRedraw();
             requestAnimationFrame(studioLoop);
         };
     </script>
